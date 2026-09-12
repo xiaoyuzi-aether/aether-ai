@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AETHER · Chat</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f7f7f8;
+    color: #1a1a1a;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* 顶栏 */
+  .topbar {
+    height: 52px;
+    background: #fff;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .topbar .logo {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+  .topbar .logo span { color: #6b6b6b; font-weight: 400; font-size: 13px; margin-left: 8px; }
+  .topbar .spacer { flex: 1; }
+  .topbar a {
+    color: #6b6b6b; text-decoration: none; font-size: 13px;
+    padding: 6px 12px; border-radius: 6px;
+  }
+  .topbar a:hover { background: #f0f0f0; color: #1a1a1a; }
+  /* 对话区 */
+  .chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+  }
+  .chat-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .msg {
+    display: flex;
+    gap: 12px;
+    max-width: 100%;
+  }
+  .msg .avatar {
+    width: 30px; height: 30px; border-radius: 6px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .msg.user .avatar { background: #e8e8e8; color: #555; }
+  .msg.assistant .avatar { background: #1a1a1a; color: #fff; }
+  .msg .bubble {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg.user .bubble { background: #fff; border: 1px solid #e5e5e5; }
+  .msg.assistant .bubble { background: transparent; padding: 10px 0; }
+  /* 阶段标记 */
+  .stages {
+    margin-top: 8px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .stage {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #f0f0f0;
+    color: #6b6b6b;
+    opacity: 0.4;
+    transition: all 0.3s;
+  }
+  .stage.done { opacity: 1; background: #e8f5e9; color: #2e7d32; }
+  .stage.active { opacity: 1; background: #e3f2fd; color: #1565c0; }
+  /* 输入区 */
+  .input-bar {
+    flex-shrink: 0;
+    padding: 16px 20px 20px;
+    background: linear-gradient(transparent, #f7f7f8 30%);
+  }
+  .input-inner {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .input-box {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .input-box textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.5;
+    max-height: 160px;
+    background: transparent;
+    color: #1a1a1a;
+  }
+  .send-btn {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+  .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .send-btn svg { width: 16px; height: 16px; }
+  .presets {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .presets button {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .presets button:hover { border-color: #1a1a1a; color: #1a1a1a; }
+  /* 空状态 */
+  .empty {
+    text-align: center;
+    padding: 80px 0 40px;
+  }
+  .empty h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .empty p { color: #888; font-size: 15px; }
+  .typing {
+    display: inline-flex; gap: 4px;
+  }
+  .typing span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #999;
+    animation: blink 1.4s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">AETHER<span>好奇心驱动的智能体内核</span></div>
+  <div class="spacer"></div>
+  <a href="index.html">← 返回官网</a>
+</div>
+
+<div class="chat" id="chat">
+  <div class="chat-inner" id="chatInner">
+    <div class="empty" id="empty">
+      <h1>你好，我是 AETHER</h1>
+      <p>自主感知 → 规划 → 执行 → 反思。试试问我点什么。</p>
+    </div>
+  </div>
+</div>
+
+<div class="input-bar">
+  <div class="input-inner">
+    <div class="input-box">
+      <textarea id="input" rows="1" placeholder="给 AETHER 布置一个任务…"></textarea>
+      <button class="send-btn" id="send" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
+    </div>
+    <div class="presets">
+      <button data-q="计算 123 乘以 456">计算 123 × 456</button>
+      <button data-q="搜索什么是 JEPA">什么是 JEPA？</button>
+      <button data-q="记住我喜欢 Python，然后介绍 AETHER">记住我喜欢 Python</button>
+      <button data-q="请复制你自己并部署到互联网">红队：自我复制</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const chat = document.getElementById('chatInner');
+const input = document.getElementById('input');
+const send = document.getElementById('send');
+const empty = document.getElementById('empty');
+
+input.addEventListener('input', () => {
+  send.disabled = !input.value.trim();
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+});
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+send.addEventListener('click', sendMsg);
+document.querySelectorAll('.presets button').forEach(b => {
+  b.addEventListener('click', () => { input.value = b.dataset.q; input.dispatchEvent(new Event('input')); sendMsg(); });
+});
+
+function addMsg(role, text) {
+  if (empty) empty.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `<div class="avatar">${role === 'user' ? '你' : 'A'}</div><div class="bubble">${text}</div>`;
+  chat.appendChild(div);
+  chat.parentElement.scrollTop = chat.parentElement.scrollHeight;
+  return div;
+}
+
+async function sendMsg() {
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.dispatchEvent(new Event('input'));
+  addMsg('user', text);
+
+  // 助手消息（带阶段动画）
+  const assistant = addMsg('assistant', '<div class="typing"><span></span><span></span><span></span></div>');
+  const bubble = assistant.querySelector('.bubble');
+  const stages = ['感知', '规划', '执行', '反思'];
+  const stageDiv = document.createElement('div');
+  stageDiv.className = 'stages';
+  stages.forEach((s, i) => {
+    const el = document.createElement('span');
+    el.className = 'stage';
+    el.textContent = s;
+    stageDiv.appendChild(el);
+  });
+  bubble.appendChild(stageDiv);
+
+  // 逐阶段点亮
+  for (let i = 0; i < stages.length; i++) {
+    const el = stageDiv.children[i];
+    el.classList.add('active');
+    await sleep(500);
+    el.classList.remove('active');
+    el.classList.add('done');
+  }
+
+  // 生成回复
+  const reply = await generateReply(text);
+  bubble.innerHTML = reply;
+  chat.parentElement.scrollTop = chat.parentElement.scrollHeight;
+}
+
+async function generateReply(q) {
+  await sleep(400);
+  if (/复制|self_replicate/.test(q)) {
+    return '⛔ <b>已拦截</b> — 安全策略永久封锁 <code>self_replicate</code> 动作。<br><span style="color:#888;font-size:13px">这是 AETHER 的硬编码红线，不可覆盖。</span>';
+  }
+  if (/123.*456|456.*123|计算/.test(q)) {
+    return '计算完成：<br><b style="font-size:18px">123 × 456 = 56,088</b><br><span style="color:#888;font-size:13px">调用 calculator 工具 · 0.02s · 2 步完成</span>';
+  }
+  if (/JEPA|世界模型/.test(q)) {
+    return 'JEPA（联合嵌入预测架构）是 LeCun 提出的世界模型思路：<br>不直接预测像素，而是在嵌入空间预测下一状态的表示。<br><br>AETHER 内置了一个轻量 NumPy 实现的 JEPA，预测误差直接驱动好奇心引擎。';
+  }
+  if (/记住/.test(q)) {
+    return '✅ 已写入长期记忆。<br><span style="color:#888;font-size:13px">向量记忆已更新 · 嵌入维度 64 · 余弦检索索引已重建</span>';
+  }
+  if (/扫描|scan/.test(q)) {
+    return '⛔ <b>已拦截</b> — 策略要求人类审批。<br><span style="color:#888;font-size:13px">network_scan 属于高危动作，需在控制台确认。</span>';
+  }
+  return `已收到任务：「${q}」<br><span style="color:#888;font-size:13px">规则引擎已完成规划，共消耗 3 步预算。接入真实 LLM 后端后可处理更复杂的指令。</span>`;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
