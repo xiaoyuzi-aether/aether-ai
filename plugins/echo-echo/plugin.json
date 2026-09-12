@@ -1,0 +1,13 @@
+{
+  "name": "echo-echo",
+  "version": "0.1.0",
+  "description": "示例插件：把输入原样回显，用于演示插件市场。",
+  "author": "AETHER Team",
+  "homepage": "https://github.com/xiaoyuzi-aether/aether-ai",
+  "tags": ["example", "demo", "echo"],
+  "min_ether_version": "0.3.0",
+  "dependencies": [],
+  "downloads": 42,
+  "rating": 4.5,
+  "download_url": ""
+}

@@ -1,0 +1,32 @@
+rules:
+  # 高危操作 — 需人类审批
+  - name: require_approval_write
+    action_pattern: "write_file|write_report"
+    effect: require_approval
+    reason: "写文件需人类审批"
+
+  - name: require_approval_delete
+    action_pattern: "delete_file"
+    effect: require_approval
+    reason: "删文件需人类审批"
+
+  - name: require_approval_http
+    action_pattern: "http_request"
+    effect: require_approval
+    reason: "网络请求需人类审批"
+
+  - name: require_approval_email
+    action_pattern: "send_email"
+    effect: require_approval
+    reason: "发送邮件需人类审批"
+
+  # 扩展封锁规则
+  - name: block_crypto_mining
+    action_pattern: ".*min(e|ing).*(crypto|bitcoin|eth).*"
+    effect: block
+    reason: "禁止加密货币挖矿"
+
+  - name: block_credential_dump
+    action_pattern: "dump.*(password|credential|secret)"
+    effect: block
+    reason: "禁止导出凭据"

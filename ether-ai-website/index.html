@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AETHER · 智能体内核</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --card: #111827;
+    --border: #1f2937;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --accent: #60a5fa;
+    --perceive: #60a5fa;
+    --plan: #a78bfa;
+    --exec: #34d399;
+    --reflect: #fbbf24;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(ellipse at top, #1a2238 0%, var(--bg) 60%);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .hero {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .hero .icon {
+    width: 48px; height: 48px;
+    background: #1e293b; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; margin-bottom: 16px;
+  }
+  .hero h1 { font-size: 22px; margin-bottom: 8px; }
+  .hero p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .hero .chain { color: var(--accent); font-size: 13px; margin-top: 8px; }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .row { display: flex; gap: 8px; margin-bottom: 20px; }
+  input {
+    flex: 1; padding: 12px 14px;
+    background: #0b1220; border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 14px;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  button {
+    padding: 12px 20px; border: none; border-radius: 10px;
+    background: var(--accent); color: #0b1220;
+    font-weight: 600; cursor: pointer; font-size: 14px;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .budget {
+    height: 4px; background: #1f2937; border-radius: 2px;
+    margin-bottom: 16px; overflow: hidden;
+  }
+  .budget > div {
+    height: 100%; background: var(--accent); width: 0%;
+    transition: width 0.3s;
+  }
+  .step {
+    border-left: 2px solid var(--border);
+    padding: 12px 16px; margin-left: 8px;
+    opacity: 0.3; transition: all 0.3s;
+  }
+  .step.active { opacity: 1; border-left-color: var(--accent); }
+  .phase {
+    display: inline-block; padding: 2px 10px;
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+    margin-right: 8px;
+  }
+  .p-perceive { background: rgba(96,165,250,.15); color: var(--perceive); }
+  .p-plan     { background: rgba(167,139,250,.15); color: var(--plan); }
+  .p-exec     { background: rgba(52,211,153,.15);  color: var(--exec); }
+  .p-reflect  { background: rgba(251,191,36,.15);  color: var(--reflect); }
+  .step .thought { font-size: 14px; margin-top: 6px; }
+  .step .obs { font-size: 12px; color: var(--muted); margin-top: 4px; font-family: monospace; }
+  .done {
+    margin-top: 16px; padding: 12px 16px;
+    background: rgba(52,211,153,.1); border-radius: 10px;
+    color: var(--exec); font-size: 14px;
+  }
+  h2 { font-size: 14px; color: var(--muted); margin-bottom: 12px; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="icon">⚙️</div>
+    <h1>智能体内核</h1>
+    <p>感知 → 规划 → 执行 → 反思 的完整回路，<br>max_steps 预算约束下的自主任务循环。</p>
+    <div class="chain">AETHER Kernel · v0.3.0</div>
+  </div>
+
+  <div class="panel">
+    <h2>在浏览器里跑一轮内核</h2>
+    <div class="row">
+      <input id="task" value="请计算 123 × 456" />
+      <button id="run">运行</button>
+    </div>
+    <div class="budget"><div id="bar"></div></div>
+    <div id="timeline"></div>
+  </div>
+</div>
+
+<script>
+const TASKS = {
+  calc: [
+    { phase: "perceive", icon: "👁️", thought: "感知任务：计算 123 × 456，剩余步数 9", obs: "" },
+    { phase: "plan",     icon: "🧠", thought: "识别为数学任务，提取表达式 123*456", obs: "" },
+    { phase: "exec",     icon: "⚙️", thought: "调用 calculator(expression='123*456')", obs: "计算结果: 56088" },
+    { phase: "reflect",  icon: "🤔", thought: "执行成功，结果正确，准备 finish", obs: "" },
+    { phase: "exec",     icon: "⚙️", thought: "调用 finish(summary='123×456=56088')", obs: "任务已完成" },
+  ],
+  search: [
+    { phase: "perceive", icon: "👁️", thought: "感知任务：搜索什么是 AETHER", obs: "" },
+    { phase: "plan",     icon: "🧠", thought: "需要知识检索，构造 query='AETHER'", obs: "" },
+    { phase: "exec",     icon: "⚙️", thought: "调用 search(query='AETHER')", obs: "知识库匹配: AETHER 是好奇心驱动的自主智能体内核" },
+    { phase: "reflect",  icon: "🤔", thought: "已获取信息，规划总结", obs: "" },
+    { phase: "exec",     icon: "⚙️", thought: "调用 finish", obs: "任务已完成" },
+  ],
+};
+
+const phaseLabel = { perceive: "感知", plan: "规划", exec: "执行", reflect: "反思" };
+
+async function run() {
+  const btn = document.getElementById("run");
+  const tl = document.getElementById("timeline");
+  const bar = document.getElementById("bar");
+  btn.disabled = true;
+  tl.innerHTML = "";
+  bar.style.width = "0%";
+
+  const steps = TASKS.calc;
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    const el = document.createElement("div");
+    el.className = "step";
+    el.innerHTML = `
+      <span class="phase p-${s.phase}">${s.icon} ${phaseLabel[s.phase]}</span>
+      <div class="thought">${s.thought}</div>
+      ${s.obs ? `<div class="obs">↳ ${s.obs}</div>` : ""}
+    `;
+    tl.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("active"));
+    bar.style.width = ((i + 1) / steps.length * 100) + "%";
+    await new Promise(r => setTimeout(r, 500));
+  }
+  const done = document.createElement("div");
+  done.className = "done";
+  done.textContent = "✅ 任务在 Step 5 完成 · 耗时 0.04s · 预算 5/10";
+  tl.appendChild(done);
+  btn.disabled = false;
+}
+document.getElementById("run").addEventListener("click", run);
+</script>
+</body>
+</html>

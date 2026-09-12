@@ -1,0 +1,12 @@
+llm:
+  backend: "echo"               # echo | openai | hf | vllm
+  openai:
+    base_url: "http://localhost:11434/v1"
+    model: "llama3"
+  hf:
+    model_name: "Qwen/Qwen2.5-0.5B-Instruct"
+    device: "auto"
+  vllm:
+    model: "Qwen/Qwen2.5-7B-Instruct"
+  temperature: 0.7
+  max_tokens: 2048

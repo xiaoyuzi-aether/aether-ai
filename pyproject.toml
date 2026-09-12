@@ -1,0 +1,45 @@
+[project]
+name = "ether-ai"
+version = "0.3.0"
+description = "AETHER — 好奇心驱动的自主智能体内核与生态协议"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [
+    { name = "AETHER Team", email = "2100393959@qq.com" },
+]
+dependencies = [
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "numpy>=1.24",
+    "pydantic>=2.0",
+    "httpx>=0.27",
+    "click>=8.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.23", "ruff>=0.4"]
+hf = ["transformers>=4.40", "sentence-transformers>=2.7", "torch>=2.2"]
+vllm = ["vllm>=0.5"]
+faiss = ["faiss-cpu>=1.8"]
+chroma = ["chromadb>=0.4"]
+ray = ["ray[default]>=2.20"]
+all = ["ether-ai[hf,vllm,faiss,chroma,ray]"]
+
+[project.scripts]
+ether-ai = "ether_ai.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/xiaoyuzi-aether/aether-ai"
+Repository = "https://github.com/xiaoyuzi-aether/aether-ai.git"
+Issues = "https://github.com/xiaoyuzi-aether/aether-ai/issues"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
