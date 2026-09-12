@@ -8,7 +8,6 @@ import yaml
 
 from ether_ai.llm.backends import BaseLLMBackend, create_backend
 
-
 DEFAULT_CONFIG_PATHS = [
     Path("configs/llm.yaml"),
     Path(__file__).resolve().parent.parent.parent / "configs" / "llm.yaml",

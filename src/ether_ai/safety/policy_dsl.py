@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import re
-import yaml
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 
 @dataclass
@@ -62,7 +63,7 @@ class PolicyDSL:
             )
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> "PolicyDSL":
+    def from_yaml(cls, path: str | Path) -> PolicyDSL:
         """从 YAML 文件加载策略。"""
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         rules = [PolicyRule(**r) for r in data.get("rules", [])]

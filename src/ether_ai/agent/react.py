@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 
 from ether_ai.agent.tools import TOOLS
 from ether_ai.memory.vector_memory import LocalVectorMemory

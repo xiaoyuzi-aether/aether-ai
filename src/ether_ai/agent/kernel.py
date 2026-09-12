@@ -1,4 +1,4 @@
-"""
+﻿"""
 kernel.py
 智能体内核 — 感知 → 规划 → 执行 → 反思 的完整回路。
 max_steps 预算约束下的自主任务循环。
@@ -6,13 +6,12 @@ max_steps 预算约束下的自主任务循环。
 """
 from __future__ import annotations
 
-import time
-import json
-import uuid
 import re
+import time
+import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -302,13 +301,12 @@ class AgentKernel:
         history_actions = " ".join(
             (r.action.tool_name if r.action else "") for r in self.state.history
         ).lower()
-        memory_tool = self.tools["memory"]
 
         # 规则 1：如果任务包含计算，调用计算器（算过一次就 finish）
         math_match = re.search(r"[\d\s\+\-\*\/\(\)\.]+", task)
         if math_match and ("计算" in task or "等于" in task or "=" in task):
             if "calculator" in history_actions:
-                return "计算已完成，准备总结。", ToolCall("finish", {"summary": f"计算结果已得出。"})
+                return "计算已完成，准备总结。", ToolCall("finish", {"summary": "计算结果已得出。"})
             expr = math_match.group().strip()
             if expr:
                 return f"任务需要计算，提取表达式 '{expr}'。", ToolCall("calculator", {"expression": expr})
@@ -461,7 +459,7 @@ class AgentKernel:
             ],
         }
         print(f"\n{'='*60}")
-        print(f"📊 任务执行报告")
+        print("📊 任务执行报告")
         print(f"   状态: {'完成 ✅' if report['done'] else '未完成 ⚠️'}")
         print(f"   步数: {report['steps_used']}/{report['max_steps']}")
         print(f"   耗时: {report['total_time']}s")

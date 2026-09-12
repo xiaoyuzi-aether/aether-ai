@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import time
-import numpy as np  # noqa: F401  (保留，便于扩展)
 from dataclasses import dataclass
+
+import numpy as np  # noqa: F401  (保留，便于扩展)
 
 
 @dataclass

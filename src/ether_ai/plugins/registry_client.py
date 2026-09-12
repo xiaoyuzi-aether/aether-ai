@@ -1,8 +1,8 @@
 """插件市场远程索引客户端 — 发现、安装、管理第三方插件。"""
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,7 +27,7 @@ class PluginInfo:
     rating: float = 0.0
 
     @classmethod
-    def from_dict(cls, d: dict) -> "PluginInfo":
+    def from_dict(cls, d: dict) -> PluginInfo:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 

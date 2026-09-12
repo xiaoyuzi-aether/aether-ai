@@ -5,9 +5,6 @@
 """
 from __future__ import annotations
 
-import asyncio
-from typing import Any
-
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -30,7 +27,7 @@ def _approver(tc) -> bool:
     # 在同步 context 里简单轮询；生产应换 asyncio.Event
     import time
     for _ in range(300):  # 最多等 30 秒
-        if tc.tool_call_id in _pending_approvals and _pending_approvals[tc.tool_call_id]:
+        if _pending_approvals.get(tc.tool_call_id):
             return True
         time.sleep(0.1)
     return False

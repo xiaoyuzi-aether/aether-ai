@@ -108,8 +108,7 @@ class HuggingFaceBackend(BaseLLMBackend):
             do_sample=True,
         )
         text = out[0]["generated_text"]
-        if text.startswith(prompt):
-            text = text[len(prompt):]
+        text = text.removeprefix(prompt)
         return LLMResponse(text=text.strip(), model=self.model_name)
 
     def is_available(self) -> bool:

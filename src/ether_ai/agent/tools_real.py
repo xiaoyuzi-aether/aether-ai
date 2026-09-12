@@ -11,7 +11,7 @@ from pathlib import Path
 
 import httpx
 
-from ether_ai.agent.kernel import BaseTool, Observation
+from ether_ai.agent.kernel import BaseTool
 
 
 class FileReadTool(BaseTool):

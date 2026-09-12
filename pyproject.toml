@@ -40,6 +40,15 @@ Issues = "https://github.com/xiaoyuzi-aether/aether-ai/issues"
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+extend-ignore = [
+  "BLE001",
+  "RUF012",
+  "SIM102",
+  "RUF059",
+  "PLC0206",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

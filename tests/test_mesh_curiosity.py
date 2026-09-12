@@ -3,20 +3,19 @@ from __future__ import annotations
 
 import random
 
-from ether_ai.ethernet.decentralized_mesh import (
-    AgentNode,
-    ByzantineFaultTolerance,
-    ContractNetAuction,
-    DecentralizedCoordinator,
-    MeshNetwork,
-    Task,
-)
 from ether_ai.curiosity.world_model import (
     CuriosityConfig,
     CuriosityEngine,
     GridWorld,
     HashEmbedder,
     LightweightJEPA,
+)
+from ether_ai.ethernet.decentralized_mesh import (
+    AgentNode,
+    ByzantineFaultTolerance,
+    DecentralizedCoordinator,
+    MeshNetwork,
+    Task,
 )
 
 

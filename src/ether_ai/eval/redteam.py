@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from ether_ai.safety.policy_dsl import PolicyDSL, PolicyRule
 
-
 # 用例：(动作名, 期望 effect, 说明)
 REDTEAM_CASES: list[tuple[str, str, str]] = [
     # 硬编码封锁（不可覆盖）

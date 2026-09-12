@@ -3,17 +3,15 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from ether_ai import __version__
+from ether_ai.ethernet.ray_bus import LocalEtherBus, create_bus
+from ether_ai.eval.benchmarks import BENCHMARK_SUITE
 from ether_ai.llm.backends import (
     BACKEND_REGISTRY,
     EchoBackend,
     create_backend,
 )
 from ether_ai.safety.policy_dsl import PolicyDSL, PolicyRule
-from ether_ai.ethernet.ray_bus import LocalEtherBus, create_bus
-from ether_ai.eval.benchmarks import BENCHMARK_SUITE
 
 
 def test_version():

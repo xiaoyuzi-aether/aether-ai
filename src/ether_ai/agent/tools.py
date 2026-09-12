@@ -40,7 +40,7 @@ def calc(expression: str) -> dict:
     if not set(expression) <= allowed:
         return {"ok": False, "error": "非法字符"}
     try:
-        val = eval(expression, {"__builtins__": {}}, {})  # noqa: S307
+        val = eval(expression, {"__builtins__": {}}, {})
         return {"ok": True, "result": val}
     except Exception as e:
         return {"ok": False, "error": str(e)}

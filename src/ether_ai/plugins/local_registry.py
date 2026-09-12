@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from dataclasses import field
 from pathlib import Path
 
 from ether_ai.plugins.registry_client import PluginInfo

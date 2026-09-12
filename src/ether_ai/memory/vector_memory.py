@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -127,7 +126,7 @@ class LocalVectorMemory:
         return path
 
     @classmethod
-    def load(cls, path: str | Path) -> "LocalVectorMemory":
+    def load(cls, path: str | Path) -> LocalVectorMemory:
         """从 save() 写的文件恢复记忆。"""
         path = Path(path)
         mem = cls()

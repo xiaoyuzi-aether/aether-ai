@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
 
 import click
 
@@ -10,14 +9,12 @@ import click
 @click.group()
 def main():
     """AETHER — 好奇心驱动的自主智能体内核。"""
-    pass
 
 
 # ── 插件市场 CLI 命令组（默认走本地索引） ───────────────────
 @main.group()
 def plugin():
     """插件市场 — 发现、安装、管理第三方插件。"""
-    pass
 
 
 def _registry():
@@ -117,9 +114,9 @@ def redteam():
 @main.command()
 def eval():
     """综合评估：记忆检索质量 + 红队 + 基准。"""
-    from ether_ai.memory.vector_memory import LocalVectorMemory
-    from ether_ai.memory.eval_memory import MemoryEvaluator
     from ether_ai.eval.redteam import run_redteam, summarize
+    from ether_ai.memory.eval_memory import MemoryEvaluator
+    from ether_ai.memory.vector_memory import LocalVectorMemory
 
     # 1) 记忆检索质量
     mem = LocalVectorMemory()

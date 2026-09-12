@@ -5,15 +5,15 @@ decentralized_mesh.py
 """
 from __future__ import annotations
 
-import heapq
 import random
+import threading
 import time
 import uuid
-import threading
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 
 # ═══════════════════════════════════════════════════════════════════
