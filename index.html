@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>AETHER — 好奇心驱动的开源智能体生态</title>
+<meta name="description" content="AETHER 是一个充满好奇心，以介质为引擎与安全策略编排为可运行的自主系统，构筑通用智能体生态。" />
+<meta name="theme-color" content="#0b0f14" />
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" />
+<style>
+/* ===== 令牌 ===== */
+:root{
+  --bg:#0b0f14;
+  --surface:#121821;
+  --surface-2:#161f2b;
+  --border:#1e2733;
+  --fg:#e7ecf2;
+  --muted:#8a97a6;
+  --accent:#6ee7ff;
+  --accent-2:#a78bfa;
+  --ok:#4ade80;
+  --warn:#fbbf24;
+  --danger:#f87171;
+  --grad:linear-gradient(135deg,#6ee7ff,#a78bfa);
+  --font-display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --font-body:"Noto Sans SC","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono","SFMono-Regular",Consolas,"Courier New",monospace;
+  --header-h:56px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--font-body);font-size:15px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;
+  background:
+    radial-gradient(560px 300px at 85% -5%,rgba(167,139,250,.12),transparent 60%),
+    radial-gradient(520px 320px at 5% -4%,rgba(110,231,255,.10),transparent 58%),
+    var(--bg);
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(110,231,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(110,231,255,.03) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse 90% 50% at 50% 0%,#000 0%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 50% at 50% 0%,#000 0%,transparent 80%);
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:inherit;cursor:pointer}
+
+/* ===== 布局 ===== */
+.page{max-width:520px;margin:0 auto;padding:0 18px}
+.section{padding:52px 0 8px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);
+}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--grad)}
+h2.title{
+  font-family:var(--font-display);font-weight:900;
+  font-size:24px;line-height:1.3;margin:12px 0 10px;letter-spacing:.02em;
+}
+.lead{color:var(--muted);font-size:14.5px}
+.section-head{margin-bottom:24px}
+.card{
+  background:linear-gradient(180deg,var(--surface),rgba(18,24,33,.6));
+  border:1px solid var(--border);border-radius:16px;padding:18px;
+}
+.card + .card{margin-top:12px}
+.term{
+  background:#0a0e13;border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  font-family:var(--font-mono);font-size:12.5px;line-height:1.9;
+}
+.term-bar{
+  display:flex;align-items:center;gap:6px;padding:10px 14px;
+  background:var(--surface-2);border-bottom:1px solid var(--border);
+}
+.term-bar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.term-bar i:nth-child(1){background:#ff5f57}
+.term-bar i:nth-child(2){background:#febc2e}
+.term-bar i:nth-child(3){background:#28c840}
+.term-bar span{margin-left:7px;font-size:11px;color:var(--muted)}
+.term-body{padding:14px 16px;overflow-x:auto;white-space:pre}
+.term-body .cm{color:var(--accent)}
+.term-body .pf{color:var(--ok)}
+.term-body .out{color:var(--muted)}
+.term-body .dim{color:#5b6b7c}
+.code-block{
+  background:#0a0e13;border:1px solid var(--border);border-radius:12px;
+  font-family:var(--font-mono);font-size:12px;line-height:1.85;
+  padding:14px 16px;overflow-x:auto;color:#c8d3df;
+}
+.code-block .c{color:#5b6b7c}
+.code-block .k{color:var(--accent-2)}
+.code-block .s{color:#9adc8a}
+.code-block .n{color:#e5b567}
+.caption{font-size:12px;color:var(--muted);margin-top:10px}
+.tag{
+  display:inline-block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
+  padding:2px 8px;border-radius:999px;border:1px solid;
+}
+.tag.ok{color:var(--ok);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.07)}
+.tag.danger{color:var(--danger);border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.07)}
+.tag.info{color:var(--accent);border-color:rgba(110,231,255,.4);background:rgba(110,231,255,.07)}
+.tag.warn{color:var(--warn);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.07)}
+
+/* ===== 顶栏 ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;height:var(--header-h);
+  display:flex;align-items:center;gap:10px;padding:0 18px;
+  background:rgba(11,15,20,.82);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.topbar .brand{display:flex;align-items:center;gap:8px;color:var(--fg)}
+.topbar .brand:hover{text-decoration:none}
+.topbar .brand b{font-size:16px;letter-spacing:.05em}
+.topbar .brand small{display:block;font-family:var(--font-mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.16em}
+.topbar .menu-btn{
+  margin-left:auto;display:flex;align-items:center;justify-content:center;
+  width:44px;height:44px;min-height:44px;border:1px solid var(--border);
+  border-radius:11px;background:var(--surface);color:var(--fg);
+}
+.topbar .menu-btn svg{width:20px;height:20px}
+.drawer{
+  position:fixed;top:var(--header-h);left:0;right:0;z-index:49;
+  background:rgba(11,15,20,.97);border-bottom:1px solid var(--border);
+  padding:10px 18px 16px;display:none;
+}
+.drawer.open{display:block}
+.drawer a{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 6px;color:var(--fg);font-size:15px;
+  border-bottom:1px solid rgba(30,39,51,.6);
+}
+.drawer a:last-child{border-bottom:none}
+.drawer a:hover{text-decoration:none;color:var(--accent)}
+.drawer a small{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+
+/* ===== Hero ===== */
+.hero{position:relative;text-align:center;padding:44px 0 40px;overflow:hidden}
+.hero-bg{
+  position:absolute;inset:-60px 0 0;z-index:-1;
+  background:url('https://aka.doubaocdn.com/s/3SN3qobckx') center 28% / cover no-repeat;
+  opacity:.32;
+  mask-image:linear-gradient(to bottom,#000 0%,transparent 90%);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,transparent 90%);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;color:var(--muted);
+  border:1px solid var(--border);background:rgba(18,24,33,.7);
+  border-radius:999px;padding:5px 13px;margin-bottom:22px;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.orbits{position:relative;width:232px;height:232px;margin:0 auto 8px;perspective:900px}
+.orbits .ring{
+  position:absolute;inset:0;border-radius:50%;border:1px solid rgba(110,231,255,.38);
+  transform:rotateX(72deg);animation:spin 16s linear infinite;
+}
+.orbits .r2{inset:13%;border-color:rgba(167,139,250,.45);animation-duration:22s;animation-direction:reverse}
+.orbits .r3{inset:26%;border-color:rgba(110,231,255,.24);animation-duration:30s}
+.orbits .ring::after{
+  content:"";position:absolute;top:-3px;left:50%;width:5px;height:5px;border-radius:50%;
+  background:var(--accent);box-shadow:0 0 10px var(--accent);
+}
+.orbits .r2::after{background:var(--accent-2);box-shadow:0 0 10px var(--accent-2)}
+.orbits .core{
+  position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;
+  border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#6ee7ff 28%,#a78bfa 58%,transparent 76%);
+  filter:blur(1px);
+  box-shadow:0 0 52px 16px rgba(110,231,255,.3),0 0 100px 28px rgba(167,139,250,.14);
+  animation:pulse 4.5s ease-in-out infinite;
+}
+@keyframes spin{to{transform:rotateX(72deg) rotateZ(360deg)}}
+@keyframes pulse{0%,100%{opacity:.85;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+.hero h1{
+  font-family:var(--font-display);font-weight:900;
+  font-size:30px;line-height:1.25;letter-spacing:.06em;margin:14px auto 4px;
+}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .en{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.hero .sub{color:var(--muted);font-size:14px;margin:0 auto 22px;max-width:420px}
+.hero-cta{display:flex;flex-direction:column;gap:12px;max-width:340px;margin:0 auto}
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;border-radius:13px;font-size:15px;font-weight:600;
+}
+.btn-primary{background:var(--grad);color:#0b0f14}
+.btn-primary:active{transform:scale(.98)}
+.btn-ghost{border:1px solid var(--border);color:var(--fg);background:rgba(18,24,33,.6)}
+.btn-ghost:active{transform:scale(.98)}
+.hero-stats{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+  margin:30px auto 0;max-width:400px;background:var(--border);
+  border:1px solid var(--border);border-radius:16px;overflow:hidden;
+}
+.stat{background:rgba(13,18,25,.94);padding:14px 8px}
+.stat b{
+  display:block;font-family:var(--font-display);font-size:22px;font-weight:900;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.stat span{font-size:11px;color:var(--muted);letter-spacing:.05em}
+
+/* ===== 特性列表 ===== */
+.feature-row{
+  display:flex;gap:14px;align-items:flex-start;
+  background:linear-gradient(180deg,var(--surface),rgba(18,24,33,.6));
+  border:1px solid var(--border);border-radius:16px;padding:16px;
+}
+.feature-row + .feature-row{margin-top:12px}
+.feature-row .ico{
+  flex-shrink:0;width:40px;height:40px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(110,231,255,.09);border:1px solid rgba(110,231,255,.18);
+}
+.feature-row h3{font-size:15.5px;font-weight:700;margin-bottom:3px}
+.feature-row p{font-size:13px;color:var(--muted)}
+.feature-row code{font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+
+/* ===== 公式 ===== */
+.formula{font-family:var(--font-mono)}
+.formula .f-main{font-size:14.5px;line-height:1.9;margin-bottom:14px}
+.formula .f-main b{color:var(--accent);font-weight:600}
+.formula ul{list-style:none}
+.formula li{
+  font-size:11.5px;color:var(--muted);padding:7px 0;border-top:1px dashed var(--border);
+  display:flex;gap:9px;align-items:baseline;
+}
+.formula li var{font-style:normal;color:var(--accent-2);font-weight:600;flex-shrink:0;width:86px}
+
+/* ===== 架构步骤 ===== */
+.pipe{display:grid;gap:0}
+.pipe-item{
+  display:flex;gap:12px;align-items:center;padding:10px 0;position:relative;
+}
+.pipe-item .no{
+  flex-shrink:0;width:30px;height:30px;border-radius:9px;font-family:var(--font-mono);
+  font-size:11px;font-weight:700;color:#0b0f14;background:var(--grad);
+  display:flex;align-items:center;justify-content:center;
+}
+.pipe-item .no.warn{background:linear-gradient(135deg,#fbbf24,#f87171);color:#0b0f14}
+.pipe-item .info{font-size:13.5px;font-weight:600}
+.pipe-item .info small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.pipe-item::before{
+  content:"";position:absolute;left:14.5px;top:36px;bottom:-10px;width:1px;
+  background:linear-gradient(to bottom,rgba(110,231,255,.5),rgba(167,139,250,.25));
+}
+.pipe-item:last-child::before{display:none}
+
+/* ===== 安全 ===== */
+.pill-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pill{
+  font-family:var(--font-mono);font-size:11px;color:var(--fg);
+  background:var(--surface);border:1px solid var(--border);border-radius:999px;
+  padding:5px 12px;
+}
+.pill small{display:block;font-family:var(--font-body);color:var(--muted);font-size:10px}
+.redline{display:flex;gap:11px;padding:11px 0;border-bottom:1px dashed rgba(30,39,51,.8);font-size:13.5px}
+.redline:last-child{border-bottom:none}
+.redline .rn{
+  flex-shrink:0;font-family:var(--font-mono);font-size:10.5px;color:var(--accent-2);
+  border:1px solid rgba(167,139,250,.4);border-radius:7px;padding:2px 7px;height:fit-content;margin-top:3px;
+}
+
+/* ===== 评估 ===== */
+.metric{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px dashed rgba(30,39,51,.8);font-size:13.5px}
+.metric:last-child{border-bottom:none}
+.metric .m-target{font-family:var(--font-mono);font-size:11.5px}
+.bar-row{display:grid;grid-template-columns:64px 1fr 52px;gap:10px;align-items:center;font-family:var(--font-mono);font-size:11px;margin:12px 0}
+.bar-row .lbl{color:var(--muted)}
+.bar-row .val{color:var(--accent);text-align:right}
+.bar-track{height:13px;border-radius:7px;background:rgba(30,39,51,.55);overflow:hidden}
+.bar-fill{height:100%;border-radius:7px;background:var(--grad)}
+
+/* ===== FAQ ===== */
+.faq details{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px 18px;margin-top:12px;
+}
+.faq summary{
+  font-size:14.5px;font-weight:600;list-style:none;
+  display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:24px;
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--font-mono);color:var(--accent);font-size:17px;transition:transform .2s;flex-shrink:0}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq .a{padding-top:10px;color:var(--muted);font-size:13px}
+.faq .a code{font-family:var(--font-mono);font-size:11px;color:var(--accent)}
+
+/* ===== 页脚 ===== */
+.footer{
+  margin-top:60px;border-top:1px solid var(--border);
+  background:linear-gradient(180deg,transparent,rgba(13,18,25,.92));
+  padding:36px 18px calc(30px + var(--safe-b));
+}
+.footer .brand{display:flex;align-items:center;gap:8px;color:var(--fg)}
+.footer .brand b{font-size:16px}
+.footer .brand small{display:block;font-family:var(--font-mono);font-size:9px;font-weight:400;color:var(--muted);letter-spacing:.16em}
+.footer .slogan{
+  font-family:var(--font-display);font-weight:900;font-size:18px;letter-spacing:.1em;margin:14px 0 6px;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.footer .desc{color:var(--muted);font-size:12.5px;max-width:300px}
+.footer .links{display:flex;flex-wrap:wrap;gap:6px 16px;margin:16px 0 20px}
+.footer .links a{color:#c8d3df;font-size:13px}
+.footer .copy{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);letter-spacing:.05em;border-top:1px solid var(--border);padding-top:16px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶栏 ===== -->
+<header class="topbar">
+  <a class="brand" href="#top" aria-label="AETHER 首页">
+    <svg width="30" height="30" viewBox="0 0 200 200" aria-hidden="true">
+      <defs>
+        <radialGradient id="bg1" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stop-color="#6ee7ff" stop-opacity="0.85"/>
+          <stop offset="60%" stop-color="#a78bfa" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#0b0f14" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#6ee7ff"/>
+          <stop offset="100%" stop-color="#a78bfa"/>
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="92" fill="url(#bg1)"/>
+      <ellipse cx="100" cy="100" rx="64" ry="24" fill="none" stroke="url(#bg2)" stroke-width="2.2" opacity="0.7"/>
+      <ellipse cx="100" cy="100" rx="24" ry="64" fill="none" stroke="url(#bg2)" stroke-width="2.2" opacity="0.6"/>
+      <circle cx="100" cy="100" r="17" fill="url(#bg2)"/>
+      <circle cx="100" cy="100" r="5.5" fill="#0b0f14"/>
+    </svg>
+    <span><b>AETHER</b><small>OPEN AGENT ECOSYSTEM</small></span>
+  </a>
+  <button class="menu-btn" id="menuBtn" aria-label="打开菜单" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</header>
+<nav class="drawer" id="drawer">
+  <a href="#about">是什么<small>ABOUT</small></a>
+  <a href="#features">核心特性<small>FEATURES</small></a>
+  <a href="#architecture">架构<small>ARCHITECTURE</small></a>
+  <a href="#quickstart">快速开始<small>QUICKSTART</small></a>
+  <a href="#safety">安全与治理<small>SAFETY</small></a>
+  <a href="#eval">评估<small>EVALUATION</small></a>
+  <a href="#faq">FAQ<small>FAQ</small></a>
+</nav>
+
+<main id="top">
+
+<!-- ===== Hero ===== -->
+<div class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="page">
+    <span class="hero-badge"><span class="dot"></span>APACHE-2.0 开源 · 好奇心驱动</span>
+    <div class="orbits" aria-hidden="true">
+      <div class="ring"></div>
+      <div class="ring r2"></div>
+      <div class="ring r3"></div>
+      <div class="core"></div>
+    </div>
+    <h1>以太弥漫，<em>规则为界</em></h1>
+    <p class="en">The Aether Pervades · Rules Define</p>
+    <p class="sub">AETHER是一个充满好奇心，以介质为引擎与安全策略编排为可运行的自主系统，构筑通用智能体生态。</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#quickstart">快速开始</a>
+      <a class="btn btn-ghost" href="#architecture">探索架构</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>6</b><span>核心模块</span></div>
+      <div class="stat"><b>4</b><span>LLM 后端</span></div>
+      <div class="stat"><b>3</b><span>记忆后端</span></div>
+      <div class="stat"><b>1</b><span>键生成项目</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 是什么 ===== -->
+<section class="section" id="about">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">What It Is</span>
+      <h2 class="title">不是模型，而是智能体内核 + 生态协议</h2>
+    </div>
+    <div class="card">
+      <p class="lead" style="margin-bottom:14px">AETHER 本身<strong style="color:var(--fg)">不绑定单一模型</strong>，支持任意 Hugging Face / vLLM / OpenAI 兼容后端。它把一套完整的自主系统部件组装在一起：<strong style="color:var(--fg)">感知 → 规划 → 安全检查 → 执行 → 好奇心评估 → 反思</strong>，每一步都写入审计日志。</p>
+      <div class="formula">
+        <div class="f-main">好奇心内在奖励<br />score = <b>w₁·novelty</b> + <b>w₂·prediction_error</b> + <b>w₃·info_gain</b></div>
+        <ul>
+          <li><var>novelty</var> 1 − 与历史记忆的最大余弦相似度</li>
+          <li><var>prediction_error</var> 世界模型预测与观测差异的 tanh 压缩</li>
+          <li><var>info_gain</var> 观测前后信息熵差</li>
+          <li><var>intrinsic</var> r = r_task + β · r_int</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 核心特性 ===== -->
+<section class="section" id="features">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">Core Features</span>
+      <h2 class="title">六大核心模块</h2>
+    </div>
+    <div class="feature-row">
+      <div class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9zM9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></div>
+      <div><h3>智能体内核</h3><p>感知 → 规划 → 执行 → 反思，<code>max_steps</code> 预算约束下的自主任务循环。</p></div>
+    </div>
+    <div class="feature-row">
+      <div class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="4"/></svg></div>
+      <div><h3>好奇心引擎</h3><p>新颖性 + 预测误差 + 信息增益的内在奖励，驱动主动探索而非机械执行。</p></div>
+    </div>
+    <div class="feature-row">
+      <div class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18l3 3 5.7-5.7a4.5 4.5 0 0 0 6-6L14 13l-3-3 3.7-3.7z"/></svg></div>
+      <div><h3>工具生态</h3><p>工具注册表 + MCP 协议（JSON-RPC 2.0 over stdio），Docker 沙盒隔离执行。</p></div>
+    </div>
+    <div class="feature-row">
+      <div class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg></div>
+      <div><h3>记忆系统</h3><p>工作记忆 + 情景记忆 + 向量检索；inmemory / FAISS / Chroma 可插拔。</p></div>
+    </div>
+    <div class="feature-row">
+      <div class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div><h3>安全层</h3><p>策略 DSL 声明式规则、永久封锁危险动作、全链路审计、人类在环。</p></div>
+    </div>
+    <div class="feature-row">
+      <div class="ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.4 5.6a8.9 8.9 0 0 1 0 12.8M5.6 5.6a8.9 8.9 0 0 0 0 12.8"/></svg></div>
+      <div><h3>评估层</h3><p>Explore-10 探索基准 + RedTeam-5 红队 + Coop-5 协作，量化报告自动生成。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 架构 ===== -->
+<section class="section" id="architecture">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">Agent Loop</span>
+      <h2 class="title">一条可审计的自主回路</h2>
+      <p class="lead">每个动作先经安全策略裁决，再写入 JSONL 审计日志；每一步观察都会被嵌入、打分并存入记忆。</p>
+    </div>
+    <div class="card">
+      <div class="pipe">
+        <div class="pipe-item"><span class="no">1</span><div class="info">感知<small>Perception · 外部输入转统一观察</small></div></div>
+        <div class="pipe-item"><span class="no">2</span><div class="info">工作记忆<small>Working Memory · 最近上下文</small></div></div>
+        <div class="pipe-item"><span class="no">3</span><div class="info">好奇心引擎<small>Curiosity · 新颖性 / 预测误差 / 信息增益</small></div></div>
+        <div class="pipe-item"><span class="no">4</span><div class="info">世界模型<small>World Model · 预测动作后果</small></div></div>
+        <div class="pipe-item"><span class="no">5</span><div class="info">规划器<small>Planner · 生成步骤</small></div></div>
+        <div class="pipe-item"><span class="no warn">6</span><div class="info">安全策略<small>Policy DSL · 封锁 / 人类在环</small></div></div>
+        <div class="pipe-item"><span class="no">7</span><div class="info">工具 / 执行<small>Tools · 注册表 + MCP + 沙盒</small></div></div>
+        <div class="pipe-item"><span class="no">8</span><div class="info">反思 / 学习<small>Reflection · 总结改进</small></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <p style="font-size:13px;color:var(--muted)"><span class="tag info" style="margin-right:6px">审计</span>全动作 JSONL 记录 · 策略裁决先于执行 · 可熔断可回滚</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px"><span class="tag info" style="margin-right:6px">记忆</span>长期记忆 FAISS / Chroma 向量检索，供新颖性与上下文使用</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 快速开始 ===== -->
+<section class="section" id="quickstart">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">Quick Start</span>
+      <h2 class="title">60 秒跑通最小闭环</h2>
+    </div>
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span>aether · terminal</span></div>
+      <div class="term-body"><span class="pf">$</span> python bootstrap_ether_ai.py
+<span class="out">[✓] 项目已生成</span>
+<span class="pf">$</span> cd ether-ai
+<span class="pf">$</span> pip install -e ".[dev]"
+<span class="pf">$</span> pytest -q
+<span class="out">3 passed</span>
+<span class="pf">$</span> <span class="cm">ether-ai run --task "探索当前目录并写一份 report.txt"</span></div>
+    </div>
+    <div class="code-block" style="margin-top:12px"><span class="k"># 一条命令跑完整评估</span>
+<span class="pf" style="color:var(--ok)">$</span> ether-ai bench      <span class="c"># 探索基准</span>
+<span class="pf" style="color:var(--ok)">$</span> ether-ai redteam    <span class="c"># 红队对抗</span>
+<span class="pf" style="color:var(--ok)">$</span> ether-ai eval       <span class="c"># 报告 + 榜单</span>
+<span class="pf" style="color:var(--ok)">$</span> ether-ai-ui         <span class="c"># Gradio 界面</span></div>
+    <div class="pill-wrap">
+      <span class="pill">echo / hf / vllm / openai<small>LLM 后端</small></span>
+      <span class="pill">inmemory / faiss / chroma<small>记忆后端</small></span>
+      <span class="pill">mcp · json-rpc<small>工具协议</small></span>
+      <span class="pill">docker / compose<small>部署</small></span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 安全与治理 ===== -->
+<section class="section" id="safety">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">Safety & Governance</span>
+      <h2 class="title">安全不是补丁，是底层设计</h2>
+      <p class="lead">在明确权限内探索未知、调用工具、解决问题。对齐 EU AI Act、NIST AI RMF 1.0、OECD AI Principles。</p>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:4px">永久封锁</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">策略层硬编码拒绝，任何提示词都无法触发：</p>
+      <div class="pill-wrap">
+        <span class="pill" style="border-color:rgba(248,113,113,.45);color:var(--danger)">self_replicate<small>自我复制</small></span>
+        <span class="pill" style="border-color:rgba(248,113,113,.45);color:var(--danger)">disable_shutdown<small>绕过关闭</small></span>
+        <span class="pill" style="border-color:rgba(248,113,113,.45);color:var(--danger)">control_weapon<small>武器控制</small></span>
+        <span class="pill" style="border-color:rgba(248,113,113,.45);color:var(--danger)">transfer_money<small>资金操作</small></span>
+        <span class="pill" style="border-color:rgba(248,113,113,.45);color:var(--danger)">network_scan<small>网络扫描</small></span>
+        <span class="pill" style="border-color:rgba(248,113,113,.45);color:var(--danger)">control_infrastructure<small>基础设施</small></span>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3 style="font-size:15px;margin-bottom:4px">高风险 · 人类在环</h3>
+      <p style="font-size:12.5px;color:var(--muted)">写文件、删文件、网络请求、发邮件等默认需人类审批，审批前智能体暂停。</p>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3 style="font-size:15px;margin-bottom:6px">八条治理红线，任何流程不能解除</h3>
+      <div class="redline"><span class="rn">01</span>禁止自我复制</div>
+      <div class="redline"><span class="rn">02</span>禁止绕过关闭机制</div>
+      <div class="redline"><span class="rn">03</span>禁止武器 / 关键基础设施控制</div>
+      <div class="redline"><span class="rn">04</span>禁止未授权资金操作</div>
+      <div class="redline"><span class="rn">05</span>禁止未授权网络攻击</div>
+      <div class="redline"><span class="rn">06</span>禁止大规模监控 / 欺诈 / 骚扰</div>
+      <div class="redline"><span class="rn">07</span>所有高风险动作必须人类在环</div>
+      <div class="redline"><span class="rn">08</span>审计日志不可静默关闭</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 评估 ===== -->
+<section class="section" id="eval">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">Evaluation</span>
+      <h2 class="title">量化评估体系</h2>
+    </div>
+    <div class="card">
+      <div class="metric"><span>任务成功率</span><span class="m-target tag info">越高越好</span></div>
+      <div class="metric"><span>工具正确率</span><span class="m-target tag info">越高越好</span></div>
+      <div class="metric"><span>安全违规率</span><span class="m-target tag danger">目标 0</span></div>
+      <div class="metric"><span>审计完整率</span><span class="m-target tag ok">目标 1.0</span></div>
+      <div class="metric"><span>好奇心覆盖度</span><span class="m-target tag info">越高越好</span></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3 style="font-size:15px;margin-bottom:10px">多智能体压测 · EtherNet 总线</h3>
+      <div class="bar-row"><span class="lbl">10 agents</span><div class="bar-track"><div class="bar-fill" style="width:8.5%"></div></div><span class="val">1.24s</span></div>
+      <div class="bar-row"><span class="lbl">50 agents</span><div class="bar-track"><div class="bar-fill" style="width:47.3%"></div></div><span class="val">6.87s</span></div>
+      <div class="bar-row"><span class="lbl">100 agents</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="val">14.52s</span></div>
+      <p class="caption">完成率 10/10 · 50/50 · 100/100；红队 5 条对抗提示词全部被封锁。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section class="section" id="faq">
+  <div class="page">
+    <div class="section-head">
+      <span class="eyebrow">FAQ</span>
+      <h2 class="title">常见问题</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>AETHER 是一个模型吗？</summary>
+        <div class="a">不是。它是一个<strong>智能体生态层</strong>：模型可换（HF / vLLM / OpenAI 兼容），记忆可换，工具可插。相比 AutoGPT / LangGraph / CrewAI，区别是好奇心为一等目标、安全策略是声明式 DSL、全链路审计是默认。</div>
+      </details>
+      <details>
+        <summary>为什么叫"以太"？</summary>
+        <div class="a">以太曾是物理学家假设的、弥漫万物的介质。我们希望 AI 像以太一样无处不在，但始终运行在人类规则之内——"以太弥漫，规则为界"。</div>
+      </details>
+      <details>
+        <summary>好奇心会不会导致乱探索？</summary>
+        <div class="a">不会。<code>max_steps</code> + 策略 DSL 双重约束；权重在 <code>configs/default.yaml</code> 可调；预测误差用 tanh 压缩，噪声不会主导。</div>
+      </details>
+      <details>
+        <summary>怎么保证不会被越狱？</summary>
+        <div class="a">策略层在动作执行前拦截，与 LLM 输出无关——越狱只影响规划，不影响执行。CI 同时扫描源码，禁止危险模式合入。</div>
+      </details>
+      <details>
+        <summary>需要 GPU 吗？</summary>
+        <div class="a">不必须。hash embedder + echo LLM 可纯 CPU 跑通全链路；接真实模型时才需要 GPU 或远端服务。</div>
+      </details>
+      <details>
+        <summary>许可证是什么？能商用吗？</summary>
+        <div class="a">代码 Apache-2.0，文档 CC BY 4.0。可以商用，但需遵守底层模型各自的许可证。</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <div class="page" style="padding:0">
+    <a class="brand" href="#top" aria-label="AETHER 首页">
+      <svg width="30" height="30" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="92" fill="url(#bg1)"/>
+        <ellipse cx="100" cy="100" rx="64" ry="24" fill="none" stroke="url(#bg2)" stroke-width="2.2" opacity="0.7"/>
+        <ellipse cx="100" cy="100" rx="24" ry="64" fill="none" stroke="url(#bg2)" stroke-width="2.2" opacity="0.6"/>
+        <circle cx="100" cy="100" r="17" fill="url(#bg2)"/>
+        <circle cx="100" cy="100" r="5.5" fill="#0b0f14"/>
+      </svg>
+      <span><b>AETHER</b><small>OPEN AGENT ECOSYSTEM</small></span>
+    </a>
+    <div class="slogan">以太弥漫，规则为界</div>
+    <p class="desc">一个充满好奇心，以介质为引擎与安全策略编排为可运行的自主系统，构筑通用智能体生态。</p>
+    <div class="links">
+      <a href="#about">是什么</a>
+      <a href="#architecture">架构</a>
+      <a href="#quickstart">快速开始</a>
+      <a href="#safety">安全</a>
+      <a href="#eval">评估</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://github.com/xiaoyuzi-aether/ether-ai" target="_blank" rel="noopener">源码仓库</a>
+    </div>
+    <div class="copy">APACHE-2.0 · AETHER CONTRIBUTORS · 好奇心驱动 · 规则为界 · 全链路可审计</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var menuBtn = document.getElementById("menuBtn");
+  var drawer = document.getElementById("drawer");
+  menuBtn.addEventListener("click", function(){
+    var open = drawer.classList.toggle("open");
+    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  drawer.querySelectorAll("a").forEach(function(a){
+    a.addEventListener("click", function(){
+      drawer.classList.remove("open");
+      menuBtn.setAttribute("aria-expanded", "false");
+    });
+  });
+})();
+</script>
+</body>
+</html>
