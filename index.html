@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -1662,7 +1662,7 @@ td code{font-family:var(--font-mono);font-size:12px;color:var(--accent)}
     var route = currentRoute();
     var found = false;
     views.forEach(function(v){
-      var on = ("#view-" + route.replace("#/","")) === v.id || (route === "#/" && v.id === "view-home");
+      var on = ("view-" + route.replace("#/","")) === v.id || (route === "#/" && v.id === "view-home");
       v.classList.toggle("active", on);
       if (on) found = true;
     });
