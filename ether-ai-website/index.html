@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -46,10 +46,7 @@
     animation: drift 200s linear infinite reverse;
     opacity: 0.5;
   }
-  @keyframes drift {
-    from { transform: translateY(0); }
-    to { transform: translateY(-400px); }
-  }
+  @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-400px); } }
   .nebula {
     position: fixed; inset: 0; z-index: 0;
     background:
@@ -58,13 +55,10 @@
       radial-gradient(ellipse 600px 400px at 50% 50%, rgba(100,100,255,.06), transparent 70%);
   }
   .orbits {
-    position: fixed;
-    top: 50%; left: 50%;
+    position: fixed; top: 50%; left: 50%;
     width: 600px; height: 600px;
     margin: -300px 0 0 -300px;
-    z-index: 0;
-    opacity: 0.5;
-    pointer-events: none;
+    z-index: 0; opacity: 0.5; pointer-events: none;
   }
   .orbits .ring {
     position: absolute; inset: 0;
@@ -77,8 +71,7 @@
   .orbits .ring.r3 { inset: 24%; border-color: rgba(110,231,255,.1); animation-duration: 50s; }
   .orbits .core {
     position: absolute; left: 50%; top: 50%;
-    width: 60px; height: 60px;
-    margin: -30px 0 0 -30px;
+    width: 60px; height: 60px; margin: -30px 0 0 -30px;
     border-radius: 50%;
     background: radial-gradient(circle, #fff, #6ee7ff 40%, #a78bfa 70%, transparent);
     filter: blur(8px);
@@ -88,134 +81,61 @@
   @keyframes spin { to { transform: rotateX(75deg) rotateZ(360deg); } }
   @keyframes pulse { 0%,100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
 
-  .container {
-    position: relative; z-index: 1;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-  nav {
-    display: flex;
-    align-items: center;
-    padding: 20px 32px;
-    gap: 24px;
-  }
-  nav .brand {
-    font-weight: 700; font-size: 17px; letter-spacing: .05em;
-    display: flex; align-items: center; gap: 8px;
-  }
-  nav .brand .brand-logo { width:32px; height:32px; border-radius:8px; object-fit:cover; } nav .brand .dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
-  }
+  .container { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+  nav { display: flex; align-items: center; padding: 20px 32px; gap: 24px; }
+  nav .brand { font-weight: 700; font-size: 17px; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
+  nav .brand .brand-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
   nav .links { margin-left: auto; display: flex; gap: 4px; }
   nav .links a {
     color: var(--muted); text-decoration: none;
-    font-size: 14px; padding: 6px 14px; border-radius: 8px;
-    transition: all .2s;
+    font-size: 14px; padding: 6px 14px; border-radius: 8px; transition: all .2s;
   }
   nav .links a:hover { color: var(--fg); background: rgba(255,255,255,.06); }
 
   main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 24px;
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 0 24px;
   }
   .badge {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 12px; letter-spacing: .15em;
-    color: var(--muted);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 999px;
-    padding: 6px 18px;
-    margin-bottom: 28px;
-    background: rgba(255,255,255,.03);
+    font-size: 12px; letter-spacing: .15em; color: var(--muted);
+    border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+    padding: 6px 18px; margin-bottom: 28px; background: rgba(255,255,255,.03);
   }
-  .badge .g {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #4ade80; box-shadow: 0 0 8px #4ade80;
-  }
-  h1 {
-    font-size: clamp(36px, 7vw, 72px);
-    font-weight: 800;
-    letter-spacing: .04em;
-    line-height: 1.15;
-    margin-bottom: 20px;
-  }
+  .badge .g { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+  h1 { font-size: clamp(36px, 7vw, 72px); font-weight: 800; letter-spacing: .04em; line-height: 1.15; margin-bottom: 20px; }
   h1 em {
     font-style: normal;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .sub {
-    max-width: 540px;
-    color: var(--muted);
-    font-size: 16px;
-    line-height: 1.7;
-    margin-bottom: 40px;
-  }
+  .sub { max-width: 540px; color: var(--muted); font-size: 16px; line-height: 1.7; margin-bottom: 40px; }
 
   .hero-box {
-    width: 100%;
-    max-width: 680px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 20px;
-    padding: 18px 20px 14px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    width: 100%; max-width: 680px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 18px 20px 14px;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
   }
   .hero-box textarea {
-    width: 100%;
-    border: none;
-    outline: none;
-    background: transparent;
-    resize: none;
-    color: var(--fg);
-    font-size: 16px;
-    font-family: inherit;
-    line-height: 1.5;
-    min-height: 28px;
-    max-height: 120px;
+    width: 100%; border: none; outline: none; background: transparent; resize: none;
+    color: var(--fg); font-size: 16px; font-family: inherit; line-height: 1.5;
+    min-height: 28px; max-height: 120px;
   }
   .hero-box textarea::placeholder { color: rgba(255,255,255,.35); }
-  .hero-box-row {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-  }
+  .hero-box-row { display: flex; align-items: center; margin-top: 10px; }
   .tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(110,231,255,.25);
-    color: var(--accent);
-    font-size: 13px;
-    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 999px;
+    border: 1px solid rgba(110,231,255,.25); color: var(--accent);
+    font-size: 13px; cursor: pointer;
   }
   .tag:hover { background: rgba(110,231,255,.1); }
   .tag svg { width: 13px; height: 13px; flex-shrink: 0; }
   .send-fab {
-    margin-left: auto;
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #050810;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    margin-left: auto; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent); color: #050810; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     transition: all .2s;
   }
   .send-fab:hover { transform: scale(1.08); box-shadow: 0 0 20px rgba(110,231,255,.4); }
@@ -225,10 +145,8 @@
   .footer {
     padding: 32px 48px 24px;
     border-top: 1px solid rgba(255,255,255,.06);
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 40px;
-    font-size: 13px;
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px; font-size: 13px;
   }
   .footer h4 { color: var(--fg); font-size: 13px; font-weight: 600; margin-bottom: 12px; }
   .footer p { color: var(--muted); line-height: 1.7; max-width: 280px; }
@@ -237,17 +155,11 @@
   .footer ul a { color: var(--muted); text-decoration: none; transition: color .15s; }
   .footer ul a:hover { color: var(--fg); }
   .footer .bottom {
-    grid-column: 1 / -1;
-    border-top: 1px solid rgba(255,255,255,.06);
-    padding-top: 16px;
-    display: flex;
-    justify-content: space-between;
-    color: var(--muted);
-    font-size: 12px;
+    grid-column: 1 / -1; border-top: 1px solid rgba(255,255,255,.06);
+    padding-top: 16px; display: flex; justify-content: space-between;
+    color: var(--muted); font-size: 12px;
   }
-  @media (max-width: 720px) {
-    .footer { grid-template-columns: 1fr 1fr; padding: 24px 20px; }
-  }
+  @media (max-width: 720px) { .footer { grid-template-columns: 1fr 1fr; padding: 24px 20px; } }
 </style>
 </head>
 <body>
@@ -300,23 +212,22 @@
     <div>
       <h4>导航</h4>
       <ul>
-        <li><a href="chat.html">在线对话</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai">源码仓库</a></li>
+        <li><a href="index.html">首页</a></li>
+        <li><a href="chat.html">在线演示</a></li>
       </ul>
     </div>
     <div>
       <h4>项目</h4>
       <ul>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">协议规范</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/curiosity_tuning.md">好奇心调参</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">README</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai">源码仓库</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/issues">FAQ</a></li>
       </ul>
     </div>
     <div>
       <h4>资源</h4>
       <ul>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/actions">CI 状态</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/issues">反馈</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">快速开始指南</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">技术架构</a></li>
       </ul>
     </div>
     <div class="bottom">
