@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -13,12 +13,10 @@
     --accent: #6ee7ff;
     --accent2: #a78bfa;
   }
-  html, body { height: 100%; }
   body {
     font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     background: #050810;
     color: var(--fg);
-    min-height: 100%;
   }
   .stars, .stars2 { position: fixed; inset: 0; z-index: 0; }
   .stars {
@@ -54,34 +52,8 @@
       radial-gradient(ellipse 700px 500px at 20% 80%, rgba(110,231,255,.10), transparent 60%),
       radial-gradient(ellipse 600px 400px at 50% 50%, rgba(100,100,255,.06), transparent 70%);
   }
-  .orbits {
-    position: fixed; top: 50%; left: 50%;
-    width: 600px; height: 600px;
-    margin: -300px 0 0 -300px;
-    z-index: 0; opacity: 0.5; pointer-events: none;
-  }
-  .orbits .ring {
-    position: absolute; inset: 0;
-    border: 1px solid rgba(110,231,255,.15);
-    border-radius: 50%;
-    transform: rotateX(75deg);
-    animation: spin 30s linear infinite;
-  }
-  .orbits .ring.r2 { inset: 12%; border-color: rgba(167,139,250,.2); animation-duration: 40s; animation-direction: reverse; }
-  .orbits .ring.r3 { inset: 24%; border-color: rgba(110,231,255,.1); animation-duration: 50s; }
-  .orbits .core {
-    position: absolute; left: 50%; top: 50%;
-    width: 60px; height: 60px; margin: -30px 0 0 -30px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #fff, #6ee7ff 40%, #a78bfa 70%, transparent);
-    filter: blur(8px);
-    box-shadow: 0 0 80px 30px rgba(110,231,255,.2);
-    animation: pulse 5s ease-in-out infinite;
-  }
-  @keyframes spin { to { transform: rotateX(75deg) rotateZ(360deg); } }
-  @keyframes pulse { 0%,100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
 
-  .container { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .container { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
   nav { display: flex; align-items: center; padding: 20px 32px; gap: 24px; }
   nav .brand { font-weight: 700; font-size: 17px; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
   nav .brand .brand-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
@@ -94,7 +66,8 @@
 
   main {
     flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center; padding: 0 24px;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 80px 24px 60px;
   }
   .badge {
     display: inline-flex; align-items: center; gap: 8px;
@@ -142,8 +115,24 @@
   .send-fab:disabled { opacity: .3; }
   .send-fab svg { width: 18px; height: 18px; }
 
+  /* 特性区块 */
+  .features {
+    max-width: 1080px; margin: 0 auto; padding: 60px 24px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  }
+  .feature-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 28px;
+    transition: all .2s;
+  }
+  .feature-card:hover { border-color: rgba(110,231,255,.3); transform: translateY(-2px); }
+  .feature-card .icon { font-size: 28px; margin-bottom: 16px; }
+  .feature-card h3 { font-size: 17px; margin-bottom: 10px; }
+  .feature-card p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+
   .footer {
-    padding: 32px 48px 24px;
+    padding: 48px 48px 24px;
     border-top: 1px solid rgba(255,255,255,.06);
     display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 40px; font-size: 13px;
@@ -159,7 +148,10 @@
     padding-top: 16px; display: flex; justify-content: space-between;
     color: var(--muted); font-size: 12px;
   }
-  @media (max-width: 720px) { .footer { grid-template-columns: 1fr 1fr; padding: 24px 20px; } }
+  @media (max-width: 720px) {
+    .features { grid-template-columns: 1fr; }
+    .footer { grid-template-columns: 1fr 1fr; padding: 24px 20px; }
+  }
 </style>
 </head>
 <body>
@@ -167,12 +159,6 @@
 <div class="stars"></div>
 <div class="stars2"></div>
 <div class="nebula"></div>
-<div class="orbits">
-  <div class="core"></div>
-  <div class="ring"></div>
-  <div class="ring r2"></div>
-  <div class="ring r3"></div>
-</div>
 
 <div class="container">
   <nav>
@@ -203,6 +189,39 @@
       </div>
     </div>
   </main>
+
+  <section class="features">
+    <div class="feature-card">
+      <div class="icon">🧠</div>
+      <h3>好奇心引擎</h3>
+      <p>新颖性、预测误差、信息增益三重量化，驱动智能体主动探索未知空间。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🔒</div>
+      <h3>安全 DSL</h3>
+      <p>声明式策略规则，硬编码封锁高危动作，人类在环审批关键操作。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🌐</div>
+      <h3>分布式 EtherNet</h3>
+      <p>Ray 总线 + P2P Mesh 拓扑，合约网拍卖任务分配，拜占庭容错共识。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📦</div>
+      <h3>插件市场</h3>
+      <p>远程索引客户端，SHA256 校验下载，一键安装第三方能力扩展。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📊</div>
+      <h3>评估基准</h3>
+      <p>覆盖文件操作、推理、多步、安全、记忆五大类任务，量化能力边界。</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">⚡</div>
+      <h3>多 LLM 后端</h3>
+      <p>统一接口接入 OpenAI 兼容、HuggingFace、vLLM 本地推理。</p>
+    </div>
+  </section>
 
   <div class="footer">
     <div>
