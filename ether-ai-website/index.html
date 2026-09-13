@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -53,8 +53,11 @@
       radial-gradient(ellipse 600px 400px at 50% 50%, rgba(100,100,255,.06), transparent 70%);
   }
 
-  .container { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
-  nav { display: flex; align-items: center; padding: 20px 32px; gap: 24px; }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+    display: flex; align-items: center; padding: 20px 32px; gap: 24px;
+    background: rgba(5,8,16,.6); backdrop-filter: blur(16px);
+  }
   nav .brand { font-weight: 700; font-size: 17px; letter-spacing: .05em; display: flex; align-items: center; gap: 8px; }
   nav .brand .brand-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
   nav .links { margin-left: auto; display: flex; gap: 4px; }
@@ -64,31 +67,41 @@
   }
   nav .links a:hover { color: var(--fg); background: rgba(255,255,255,.06); }
 
-  main {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; text-align: center;
-    padding: 80px 24px 60px;
+  .hero {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 100px 24px 60px;
   }
   .badge {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 12px; letter-spacing: .15em; color: var(--muted);
     border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
     padding: 6px 18px; margin-bottom: 28px; background: rgba(255,255,255,.03);
+    opacity: 0; animation: fadeUp .8s .2s forwards;
   }
   .badge .g { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; }
-  h1 { font-size: clamp(36px, 7vw, 72px); font-weight: 800; letter-spacing: .04em; line-height: 1.15; margin-bottom: 20px; }
+  h1 {
+    font-size: clamp(36px, 7vw, 72px); font-weight: 800; letter-spacing: .04em;
+    line-height: 1.15; margin-bottom: 20px;
+    opacity: 0; animation: fadeUp .8s .4s forwards;
+  }
   h1 em {
     font-style: normal;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .sub { max-width: 540px; color: var(--muted); font-size: 16px; line-height: 1.7; margin-bottom: 40px; }
-
+  .sub {
+    max-width: 540px; color: var(--muted); font-size: 16px; line-height: 1.7; margin-bottom: 40px;
+    opacity: 0; animation: fadeUp .8s .6s forwards;
+  }
   .hero-box {
     width: 100%; max-width: 680px;
     background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
     border-radius: 20px; padding: 18px 20px 14px;
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    opacity: 0; animation: fadeUp .8s .8s forwards;
   }
   .hero-box textarea {
     width: 100%; border: none; outline: none; background: transparent; resize: none;
@@ -115,24 +128,32 @@
   .send-fab:disabled { opacity: .3; }
   .send-fab svg { width: 18px; height: 18px; }
 
-  /* 特性区块 */
-  .features {
-    max-width: 1080px; margin: 0 auto; padding: 60px 24px;
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+  .scroll-hint {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+    color: var(--muted); font-size: 12px; letter-spacing: .2em;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    animation: bounce 2s infinite;
   }
-  .feature-card {
-    background: rgba(255,255,255,.04);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 16px; padding: 28px;
-    transition: all .2s;
+  .scroll-hint svg { width: 20px; height: 20px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  .feature-card:hover { border-color: rgba(110,231,255,.3); transform: translateY(-2px); }
-  .feature-card .icon { font-size: 28px; margin-bottom: 16px; }
-  .feature-card h3 { font-size: 17px; margin-bottom: 10px; }
-  .feature-card p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+  @keyframes bounce {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, 8px); }
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity .8s ease, transform .8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
 
   .footer {
-    padding: 48px 48px 24px;
+    position: relative; z-index: 1;
+    padding: 80px 48px 32px;
     border-top: 1px solid rgba(255,255,255,.06);
     display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 40px; font-size: 13px;
@@ -149,8 +170,7 @@
     color: var(--muted); font-size: 12px;
   }
   @media (max-width: 720px) {
-    .features { grid-template-columns: 1fr; }
-    .footer { grid-template-columns: 1fr 1fr; padding: 24px 20px; }
+    .footer { grid-template-columns: 1fr 1fr; padding: 48px 20px 24px; }
   }
 </style>
 </head>
@@ -160,74 +180,75 @@
 <div class="stars2"></div>
 <div class="nebula"></div>
 
-<div class="container">
-  <nav>
-    <div class="brand"><img src="logo.png" class="brand-logo" alt="AETHER">AETHER</div>
-    <div class="links">
-      <a href="chat.html">在线对话</a>
-      <a href="https://github.com/xiaoyuzi-aether/aether-ai" target="_blank">GitHub</a>
-    </div>
-  </nav>
+<nav>
+  <div class="brand"><img src="logo.png" class="brand-logo" alt="AETHER">AETHER</div>
+  <div class="links">
+    <a href="chat.html">在线对话</a>
+    <a href="https://github.com/xiaoyuzi-aether/aether-ai" target="_blank">GitHub</a>
+  </div>
+</nav>
 
-  <main>
-    <div class="badge"><span class="g"></span>APACHE-2.0 开源 · 好奇心驱动</div>
-    <h1>以太弥漫，<em>规则为界</em></h1>
-    <p class="sub">
-      AETHER 是一个自主智能体内核——感知、规划、执行、反思，<br>
-      以好奇心为引擎，以安全策略为边界。
-    </p>
-    <div class="hero-box">
-      <textarea id="heroInput" rows="1" placeholder="好奇，探索未知"></textarea>
-      <div class="hero-box-row">
-        <span class="tag">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-          生态执行
-        </span>
-        <button class="send-fab" id="heroSend" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-        </button>
-      </div>
+<section class="hero">
+  <div class="badge"><span class="g"></span>APACHE-2.0 开源 · 好奇心驱动</div>
+  <h1>以太弥漫，<em>规则为界</em></h1>
+  <p class="sub">
+    AETHER 是一个自主智能体内核——感知、规划、执行、反思，<br>
+    以好奇心为引擎，以安全策略为边界。
+  </p>
+  <div class="hero-box">
+    <textarea id="heroInput" rows="1" placeholder="好奇，探索未知"></textarea>
+    <div class="hero-box-row">
+      <span class="tag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        生态执行
+      </span>
+      <button class="send-fab" id="heroSend" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      </button>
     </div>
-  </main>
+  </div>
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+  </div>
+</section>
 
-
-  <div class="footer">
-    <div>
-      <h4 style="font-size:16px;font-weight:700;margin-bottom:10px">AETHER</h4>
-      <p>一个好奇心驱动、可审计、可扩展的开源通用智能体生态：把 LLM、工具、记忆、世界模型、好奇心引擎与安全策略组装成可运行的自主系统。</p>
-    </div>
-    <div>
-      <h4>导航</h4>
-      <ul>
-        <li><a href="index.html">首页</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">架构</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">快速开始</a></li>
-        <li><a href="chat.html">在线演示</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/tree/main/src/ether_ai">模块</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4>项目</h4>
-      <ul>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/src/ether_ai/safety/policy_dsl.py">安全与治理</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/src/ether_ai/eval/benchmarks.py">评估</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/issues">FAQ</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai">源码仓库</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4>资源</h4>
-      <ul>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">快速开始指南</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">技术架构</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/curiosity_tuning.md">安全白皮书</a></li>
-        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/actions">评估报告</a></li>
-      </ul>
-    </div>
-    <div class="bottom">
-      <span>Apache-2.0 · EtherAI Contributors</span>
-      <span>好奇心驱动 · 规则为界 · 全链路可审计</span>
-    </div>
+<div class="footer reveal">
+  <div>
+    <h4 style="font-size:16px;font-weight:700;margin-bottom:10px">AETHER</h4>
+    <p>一个好奇心驱动、可审计、可扩展的开源通用智能体生态：把 LLM、工具、记忆、世界模型、好奇心引擎与安全策略组装成可运行的自主系统。</p>
+  </div>
+  <div>
+    <h4>导航</h4>
+    <ul>
+      <li><a href="index.html">首页</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">架构</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">快速开始</a></li>
+      <li><a href="chat.html">在线演示</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/tree/main/src/ether_ai">模块</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>项目</h4>
+    <ul>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/src/ether_ai/safety/policy_dsl.py">安全与治理</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/src/ether_ai/eval/benchmarks.py">评估</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/issues">FAQ</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai">源码仓库</a></li>
+    </ul>
+  </div>
+  <div>
+    <h4>资源</h4>
+    <ul>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">快速开始指南</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">技术架构</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/curiosity_tuning.md">安全白皮书</a></li>
+      <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/actions">评估报告</a></li>
+    </ul>
+  </div>
+  <div class="bottom">
+    <span>Apache-2.0 · EtherAI Contributors</span>
+    <span>好奇心驱动 · 规则为界 · 全链路可审计</span>
   </div>
 </div>
 
@@ -248,6 +269,14 @@
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); }
   });
   send.addEventListener('click', go);
+
+  // 滚动渐入
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) e.target.classList.add('visible');
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
 </script>
 </body>
 </html>
