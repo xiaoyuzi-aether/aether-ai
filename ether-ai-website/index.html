@@ -151,6 +151,26 @@
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
+  .cta-row {
+    position: relative; z-index: 1;
+    display: flex; justify-content: center; gap: 20px;
+    padding: 40px 24px 0; flex-wrap: wrap;
+  }
+  .cta-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 24px 36px;
+    text-align: center; min-width: 260px;
+    transition: all .2s;
+  }
+  .cta-card:hover { border-color: rgba(110,231,255,.3); transform: translateY(-2px); }
+  .cta-card .title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .cta-card .desc { font-size: 13px; color: var(--muted); }
+  .cta-card .status-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #4ade80; box-shadow: 0 0 8px #4ade80; margin-right: 6px;
+  }
+
   .footer {
     position: relative; z-index: 1;
     padding: 80px 48px 32px;
@@ -170,7 +190,27 @@
     color: var(--muted); font-size: 12px;
   }
   @media (max-width: 720px) {
-    .footer { grid-template-columns: 1fr 1fr; padding: 48px 20px 24px; }
+    .cta-row {
+    position: relative; z-index: 1;
+    display: flex; justify-content: center; gap: 20px;
+    padding: 40px 24px 0; flex-wrap: wrap;
+  }
+  .cta-card {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 24px 36px;
+    text-align: center; min-width: 260px;
+    transition: all .2s;
+  }
+  .cta-card:hover { border-color: rgba(110,231,255,.3); transform: translateY(-2px); }
+  .cta-card .title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .cta-card .desc { font-size: 13px; color: var(--muted); }
+  .cta-card .status-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: #4ade80; box-shadow: 0 0 8px #4ade80; margin-right: 6px;
+  }
+
+  .footer { grid-template-columns: 1fr 1fr; padding: 48px 20px 24px; }
   }
 </style>
 </head>
@@ -212,6 +252,17 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
   </div>
 </section>
+
+<div class="cta-row reveal">
+  <a class="cta-card" href="chat.html" style="text-decoration:none;color:var(--fg)">
+    <div class="title">获取 App</div>
+    <div class="desc">移动端即将上线 · 先体验网页版</div>
+  </a>
+  <a class="cta-card" href="chat.html" style="text-decoration:none;color:var(--fg)">
+    <div class="title"><span class="status-dot"></span>服务状态</div>
+    <div class="desc">全部系统正常运行</div>
+  </a>
+</div>
 
 <div class="footer reveal">
   <div>
