@@ -190,11 +190,31 @@
   }
   .btn-ghost:hover { background: rgba(255,255,255,.06); }
 
-  footer {
-    padding: 20px 32px;
-    text-align: center;
+  .footer {
+    padding: 32px 48px 24px;
+    border-top: 1px solid rgba(255,255,255,.06);
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    font-size: 13px;
+  }
+  .footer h4 { color: var(--fg); font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .footer p { color: var(--muted); line-height: 1.7; max-width: 280px; }
+  .footer ul { list-style: none; }
+  .footer ul li { margin-bottom: 8px; }
+  .footer ul a { color: var(--muted); text-decoration: none; transition: color .15s; }
+  .footer ul a:hover { color: var(--fg); }
+  .footer .bottom {
+    grid-column: 1 / -1;
+    border-top: 1px solid rgba(255,255,255,.06);
+    padding-top: 16px;
+    display: flex;
+    justify-content: space-between;
     color: var(--muted);
     font-size: 12px;
+  }
+  @media (max-width: 720px) {
+    .footer { grid-template-columns: 1fr 1fr; padding: 24px 20px; }
   }
 </style>
 </head>
@@ -232,7 +252,38 @@
     </div>
   </main>
 
-  <footer>AETHER · Open Agent Ecosystem · v0.3.0</footer>
+  <div class="footer">
+    <div>
+      <h4 style="font-size:16px;font-weight:700;margin-bottom:10px">AETHER</h4>
+      <p>一个好奇心驱动、可审计、可扩展的开源通用智能体生态：把 LLM、工具、记忆、世界模型、好奇心引擎与安全策略组装成可运行的自主系统。</p>
+    </div>
+    <div>
+      <h4>导航</h4>
+      <ul>
+        <li><a href="chat.html">在线对话</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai">源码仓库</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>项目</h4>
+      <ul>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/protocol.md">协议规范</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/docs/curiosity_tuning.md">好奇心调参</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/blob/main/README.md">README</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>资源</h4>
+      <ul>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/actions">CI 状态</a></li>
+        <li><a href="https://github.com/xiaoyuzi-aether/aether-ai/issues">反馈</a></li>
+      </ul>
+    </div>
+    <div class="bottom">
+      <span>Apache-2.0 · EtherAI Contributors</span>
+      <span>好奇心驱动 · 规则为界 · 全链路可审计</span>
+    </div>
+  </div>
 </div>
 
 </body>
