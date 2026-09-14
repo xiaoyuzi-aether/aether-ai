@@ -10,47 +10,52 @@
   body {
     font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     background: #f7f7f8; color: #1a1a1a;
-    height: 100vh; display: flex; flex-direction: column;
+    height: 100vh; display: flex; overflow: hidden;
   }
-
-  /* ── 侧边栏 ── */
+  /* 侧边栏 */
   .sidebar {
-    width: 260px; background: #fff; border-right: 1px solid #e5e5e5;
+    width: 260px; background: #0f1117; color: #e8ecf4;
     display: flex; flex-direction: column; flex-shrink: 0;
-    transition: margin-left .25s ease; overflow: hidden;
+    transition: width .25s ease; overflow: hidden;
   }
-  .sidebar.collapsed { margin-left: -260px; }
+  .sidebar.collapsed { width: 0; }
   .sidebar-header {
-    padding: 16px; border-bottom: 1px solid #e5e5e5;
+    padding: 16px; border-bottom: 1px solid rgba(255,255,255,.08);
   }
   .new-chat-btn {
-    width: 100%; padding: 10px; border-radius: 8px;
-    background: #1a1a1a; color: #fff; border: none;
-    font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 10px; border-radius: 10px;
+    background: rgba(110,231,255,.15); border: 1px solid rgba(110,231,255,.3);
+    color: #6ee7ff; font-size: 14px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .15s;
   }
-  .new-chat-btn:hover { background: #333; }
-  .chat-history { flex: 1; overflow-y: auto; padding: 8px; }
-  .chat-history-item {
-    padding: 10px 12px; border-radius: 8px; font-size: 14px;
-    cursor: pointer; margin-bottom: 2px; color: #333;
+  .new-chat-btn:hover { background: rgba(110,231,255,.25); }
+  .new-chat-btn svg { width: 16px; height: 16px; }
+  .chat-list { flex: 1; overflow-y: auto; padding: 12px; }
+  .chat-item {
+    padding: 10px 12px; border-radius: 8px; font-size: 13px;
+    color: #9aa0b0; cursor: pointer; margin-bottom: 4px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .chat-history-item:hover { background: #f0f0f0; }
-  .chat-history-item.active { background: #e8e8e8; }
+  .chat-item:hover { background: rgba(255,255,255,.06); color: #e8ecf4; }
+  .chat-item.active { background: rgba(110,231,255,.12); color: #6ee7ff; }
+  .sidebar-footer {
+    padding: 12px 16px; border-top: 1px solid rgba(255,255,255,.08);
+    font-size: 12px; color: #666;
+  }
 
-  /* ── 主区 ── */
+  /* 主区域 */
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .topbar {
     height: 52px; background: #fff; border-bottom: 1px solid #e5e5e5;
-    display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0;
+    display: flex; align-items: center; padding: 0 16px; gap: 8px; flex-shrink: 0;
   }
-  .toggle-btn {
-    width: 36px; height: 36px; border-radius: 8px; border: none;
-    background: transparent; cursor: pointer; display: flex;
-    align-items: center; justify-content: center; color: #666;
+  .toggle-sidebar {
+    width: 34px; height: 34px; border-radius: 8px; border: 1px solid #e5e5e5;
+    background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
-  .toggle-btn:hover { background: #f0f0f0; }
-  .toggle-btn svg { width: 18px; height: 18px; }
+  .toggle-sidebar:hover { background: #f0f0f0; }
+  .toggle-sidebar svg { width: 18px; height: 18px; }
   .topbar .logo { font-weight: 700; font-size: 16px; display: flex; align-items: center; }
   .topbar .spacer { flex: 1; }
   .topbar a { color: #6b6b6b; text-decoration: none; font-size: 13px; padding: 6px 12px; border-radius: 6px; }
@@ -59,29 +64,11 @@
   .center-area {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: 40px 20px; min-height: 50vh;
+    padding: 40px 20px;
   }
   .center-area h1 { font-size: 28px; font-weight: 700; margin-bottom: 30px; }
-
-  .chat { flex: 1; overflow-y: auto; display: none; }
-  .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; }
-  .msg { display: flex; gap: 12px; max-width: 100%; }
-  .msg .avatar {
-    width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
-  }
-  .msg.user .avatar { background: #e8e8e8; color: #555; }
-  .msg.assistant .avatar { background: transparent; }
-  .msg .bubble {
-    padding: 10px 14px; border-radius: 10px;
-    font-size: 15px; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
-  }
-  .msg.user .bubble { background: #fff; border: 1px solid #e5e5e5; }
-  .msg.assistant .bubble { background: transparent; padding: 10px 0; }
-
-  .input-bar { flex-shrink: 0; padding: 16px 20px 20px; }
   .input-box {
-    max-width: 760px; margin: 0 auto;
+    width: 100%; max-width: 760px;
     background: #fff; border: 1px solid #e5e5e5; border-radius: 16px;
     padding: 16px 16px 12px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
   }
@@ -100,10 +87,26 @@
   .send-btn {
     margin-left: auto; width: 34px; height: 34px; border-radius: 8px;
     background: #1a1a1a; color: #fff; border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .2s;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .send-btn:disabled { opacity: .3; cursor: not-allowed; }
   .send-btn svg { width: 16px; height: 16px; }
+
+  .chat { flex: 1; overflow-y: auto; display: none; }
+  .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; }
+  .msg { display: flex; gap: 12px; }
+  .msg .avatar {
+    width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+  }
+  .msg.user .avatar { background: #e8e8e8; color: #555; }
+  .msg.assistant .avatar { background: transparent; }
+  .msg .bubble {
+    padding: 10px 14px; border-radius: 10px; font-size: 15px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.user .bubble { background: #fff; border: 1px solid #e5e5e5; }
+  .msg.assistant .bubble { background: transparent; padding: 10px 0; }
 
   .offline-warn {
     background: #fff3cd; border: 1px solid #ffc107; color: #856404;
@@ -114,63 +117,52 @@
   .typing span:nth-child(2) { animation-delay: .2s; }
   .typing span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100% { opacity: .3; } 40% { opacity: 1; } }
-  .layout { display: flex; flex: 1; overflow: hidden; }
 </style>
 </head>
 <body>
 
-<div class="layout">
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <button class="new-chat-btn" onclick="newChat()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v19M5 12h19"/></svg>
-        开启新对话
-      </button>
-    </div>
-    <div class="chat-history" id="historyList"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <button class="new-chat-btn" onclick="newChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      开启新对话
+    </button>
+  </div>
+  <div class="chat-list" id="chatList">
+    <div class="chat-item active">当前对话</div>
+  </div>
+  <div class="sidebar-footer">AETHER v0.3</div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="toggle-sidebar" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="logo"><img src="logo.png" style="width:28px;height:28px;border-radius:6px;vertical-align:middle;margin-right:8px">AETHER</div>
+    <div class="spacer"></div>
+    <a href="index.html">← 返回官网</a>
   </div>
 
-  <div class="main">
-    <div class="topbar">
-      <button class="toggle-btn" onclick="toggleSidebar()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-      </button>
-      <div class="logo"><img src="logo.png" style="width:28px;height:28px;border-radius:6px;vertical-align:middle;margin-right:8px">AETHER</div>
-      <div class="spacer"></div>
-      <a href="index.html">← 返回官网</a>
-    </div>
-
-    <div class="center-area" id="centerArea">
-      <div class="offline-warn" id="warn">⚠️ 后端未连接（localhost:8000）。运行 <code>python server.py</code> 启动。</div>
-      <h1>HI,好久不见~</h1>
-      <div class="input-box">
-        <textarea id="input" rows="1" placeholder="给 AETHER 布置一个任务…"></textarea>
-        <div class="input-box-bottom">
-          <div class="preset-chips">
-            <button data-q="用 Python 写一个快速排序">写代码</button>
-            <button data-q="帮我写一条朋友圈文案">写文案</button>
-          </div>
-          <button class="send-btn" id="send" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-          </button>
+  <div class="center-area" id="centerArea">
+    <div class="offline-warn" id="warn">⚠️ 后端未连接。运行 <code>python server.py</code>。</div>
+    <h1>HI,好久不见~</h1>
+    <div class="input-box">
+      <textarea id="input" rows="1" placeholder="给 AETHER 布置一个任务…"></textarea>
+      <div class="input-box-bottom">
+        <div class="preset-chips">
+          <button data-q="用 Python 写一个快速排序">写代码</button>
+          <button data-q="帮我写一条朋友圈文案">写文案</button>
         </div>
+        <button class="send-btn" id="send" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
       </div>
     </div>
+  </div>
 
-    <div class="chat" id="chat">
-      <div class="chat-inner" id="chatInner"></div>
-    </div>
-
-    <div class="input-bar" id="inputBar" style="display:none">
-      <div class="input-box">
-        <textarea id="input2" rows="1" placeholder="继续对话…"></textarea>
-        <div class="input-box-bottom">
-          <button class="send-btn" id="send2" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-          </button>
-        </div>
-      </div>
-    </div>
+  <div class="chat" id="chat">
+    <div class="chat-inner" id="chatInner"></div>
   </div>
 </div>
 
@@ -179,52 +171,34 @@ const sidebar = document.getElementById('sidebar');
 const centerArea = document.getElementById('centerArea');
 const chat = document.getElementById('chat');
 const chatInner = document.getElementById('chatInner');
-const inputBar = document.getElementById('inputBar');
+const chatList = document.getElementById('chatList');
 const input = document.getElementById('input');
-const input2 = document.getElementById('input2');
 const send = document.getElementById('send');
-const send2 = document.getElementById('send2');
 const warn = document.getElementById('warn');
-const historyList = document.getElementById('historyList');
-
-let conversations = JSON.parse(localStorage.getItem('aether_chats') || '[]');
-let currentId = null;
+const history = [];
 
 function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
 
-function renderHistory() {
-  historyList.innerHTML = '';
-  conversations.forEach((c, i) => {
-    const div = document.createElement('div');
-    div.className = 'chat-history-item' + (c.id === currentId ? ' active' : '');
-    div.textContent = c.title || '新对话';
-    div.onclick = () => loadChat(c.id);
-    historyList.appendChild(div);
-  });
-}
-
 function newChat() {
-  currentId = null;
-  chatInner.innerHTML = '';
   centerArea.style.display = 'flex';
   chat.style.display = 'none';
-  inputBar.style.display = 'none';
-  input.value = '';
-  input.dispatchEvent(new Event('input'));
-  renderHistory();
+  chatInner.innerHTML = '';
+  history.length = 0;
+  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
 }
 
-function loadChat(id) {
-  const c = conversations.find(x => x.id === id);
-  if (!c) return;
-  currentId = id;
-  centerArea.style.display = 'none';
-  chat.style.display = 'block';
-  inputBar.style.display = 'block';
-  chatInner.innerHTML = '';
-  c.messages.forEach(m => addMsg(m.role, m.content));
-  renderHistory();
-}
+input.addEventListener('input', () => {
+  send.disabled = !input.value.trim();
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+});
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+send.addEventListener('click', sendMsg);
+document.querySelectorAll('.preset-chips button').forEach(b => {
+  b.addEventListener('click', () => { input.value = b.dataset.q; input.dispatchEvent(new Event('input')); sendMsg(); });
+});
 
 function addMsg(role, text) {
   const div = document.createElement('div');
@@ -236,63 +210,35 @@ function addMsg(role, text) {
   return div;
 }
 
-[input, input2].forEach(el => {
-  el.addEventListener('input', () => {
-    const s = el === input ? send : send2;
-    s.disabled = !el.value.trim();
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
-  });
-  el.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(el === input ? input.value : input2.value); }
-  });
-});
-send.addEventListener('click', () => doSend(input.value));
-send2.addEventListener('click', () => doSend(input2.value));
-document.querySelectorAll('.preset-chips button').forEach(b => {
-  b.addEventListener('click', () => { input.value = b.dataset.q; input.dispatchEvent(new Event('input')); doSend(input.value); });
-});
-
-async function doSend(text) {
-  text = text.trim();
+async function sendMsg() {
+  const text = input.value.trim();
   if (!text) return;
-  input.value = ''; input2.value = '';
-  input.dispatchEvent(new Event('input')); input2.dispatchEvent(new Event('input'));
+  input.value = '';
+  input.dispatchEvent(new Event('input'));
 
   centerArea.style.display = 'none';
   chat.style.display = 'block';
-  inputBar.style.display = 'block';
-
-  if (!currentId) {
-    currentId = Date.now().toString();
-    conversations.unshift({id: currentId, title: text.slice(0,20), messages: []});
-  }
-  const conv = conversations.find(x => x.id === currentId);
-  conv.messages.push({role: 'user', content: text});
-
   addMsg('user', text);
+  history.push({role: 'user', content: text});
+
   const assistant = addMsg('assistant', '<div class="typing"><span></span><span></span><span></span></div>');
   const bubble = assistant.querySelector('.bubble');
 
   try {
     const r = await fetch('http://127.0.0.1:8000/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, history: conv.messages.slice(0,-1)})
+      body: JSON.stringify({message: text, history: history.slice(0, -1)})
     });
     if (!r.ok) throw new Error(r.status);
     const data = await r.json();
     bubble.textContent = data.reply;
-    conv.messages.push({role: 'assistant', content: data.reply});
+    history.push({role: 'assistant', content: data.reply});
   } catch (e) {
     warn.style.display = 'block';
-    bubble.innerHTML = '⚠️ 后端未连接。';
+    bubble.innerHTML = '⚠️ 无法连接后端。';
   }
-  localStorage.setItem('aether_chats', JSON.stringify(conversations));
-  renderHistory();
   chat.scrollTop = chat.scrollHeight;
 }
-
-renderHistory();
 </script>
 </body>
 </html>
