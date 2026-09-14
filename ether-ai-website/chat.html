@@ -209,10 +209,21 @@ const history = [];
 
 function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
 function newChat() {
+  const item = document.createElement('div');
+  item.className = 'chat-item';
+  item.textContent = '新对话 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  item.onclick = () => selectChat(item);
+  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+  chatList.insertBefore(item, chatList.firstChild);
   centerArea.style.display = 'flex';
   chat.style.display = 'none';
   chatInner.innerHTML = '';
   history.length = 0;
+  input.focus();
+}
+function selectChat(el) {
+  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
 }
 
 input.addEventListener('input', () => {
