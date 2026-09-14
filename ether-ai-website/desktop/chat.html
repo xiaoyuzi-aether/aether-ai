@@ -10,59 +10,65 @@
   body {
     font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     background: #f7f7f8; color: #1a1a1a;
-    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    height: 100vh; display: flex; flex-direction: column;
   }
+
+  /* ── 侧边栏 ── */
+  .sidebar {
+    width: 260px; background: #fff; border-right: 1px solid #e5e5e5;
+    display: flex; flex-direction: column; flex-shrink: 0;
+    transition: margin-left .25s ease; overflow: hidden;
+  }
+  .sidebar.collapsed { margin-left: -260px; }
+  .sidebar-header {
+    padding: 16px; border-bottom: 1px solid #e5e5e5;
+  }
+  .new-chat-btn {
+    width: 100%; padding: 10px; border-radius: 8px;
+    background: #1a1a1a; color: #fff; border: none;
+    font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .new-chat-btn:hover { background: #333; }
+  .chat-history { flex: 1; overflow-y: auto; padding: 8px; }
+  .chat-history-item {
+    padding: 10px 12px; border-radius: 8px; font-size: 14px;
+    cursor: pointer; margin-bottom: 2px; color: #333;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .chat-history-item:hover { background: #f0f0f0; }
+  .chat-history-item.active { background: #e8e8e8; }
+
+  /* ── 主区 ── */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .topbar {
     height: 52px; background: #fff; border-bottom: 1px solid #e5e5e5;
-    display: flex; align-items: center; padding: 0 16px; gap: 8px; flex-shrink: 0;
+    display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0;
   }
-  .topbar .icon-btn {
-    width: 34px; height: 34px; border: none; background: transparent;
-    border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: #555;
+  .toggle-btn {
+    width: 36px; height: 36px; border-radius: 8px; border: none;
+    background: transparent; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; color: #666;
   }
-  .topbar .icon-btn:hover { background: #f0f0f0; }
-  .topbar .icon-btn svg { width: 20px; height: 20px; }
+  .toggle-btn:hover { background: #f0f0f0; }
+  .toggle-btn svg { width: 18px; height: 18px; }
   .topbar .logo { font-weight: 700; font-size: 16px; display: flex; align-items: center; }
   .topbar .spacer { flex: 1; }
   .topbar a { color: #6b6b6b; text-decoration: none; font-size: 13px; padding: 6px 12px; border-radius: 6px; }
   .topbar a:hover { background: #f0f0f0; color: #1a1a1a; }
 
-  .main { display: flex; flex: 1; overflow: hidden; }
-
-  .sidebar {
-    width: 260px; background: #fff; border-right: 1px solid #e5e5e5;
-    display: flex; flex-direction: column; flex-shrink: 0;
-    transition: margin-left .25s ease;
+  .center-area {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 20px; min-height: 50vh;
   }
-  .sidebar.closed { margin-left: -260px; }
-  .sidebar .new-chat {
-    margin: 12px; padding: 10px 14px; border: 1px solid #e5e5e5; border-radius: 10px;
-    background: #fafafa; cursor: pointer; font-size: 14px;
-    display: flex; align-items: center; gap: 8px; transition: all .15s;
-  }
-  .sidebar .new-chat:hover { background: #f0f0f0; }
-  .sidebar .new-chat svg { width: 16px; height: 16px; }
-  .sidebar .history { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
-  .sidebar .history-title { font-size: 12px; color: #999; padding: 8px 4px; }
-  .sidebar .history-item {
-    padding: 10px 12px; border-radius: 8px; font-size: 14px;
-    cursor: pointer; color: #444; margin-bottom: 2px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .sidebar .history-item:hover { background: #f0f0f0; }
-  .sidebar .history-item.active { background: #e8e8e8; color: #1a1a1a; }
+  .center-area h1 { font-size: 28px; font-weight: 700; margin-bottom: 30px; }
 
-  .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-  .chat { flex: 1; overflow-y: auto; }
+  .chat { flex: 1; overflow-y: auto; display: none; }
   .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; }
-
   .msg { display: flex; gap: 12px; max-width: 100%; }
   .msg .avatar {
     width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
   }
   .msg.user .avatar { background: #e8e8e8; color: #555; }
   .msg.assistant .avatar { background: transparent; }
@@ -73,18 +79,11 @@
   .msg.user .bubble { background: #fff; border: 1px solid #e5e5e5; }
   .msg.assistant .bubble { background: transparent; padding: 10px 0; }
 
-  .center-area {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 40px 20px;
-  }
-  .center-area h1 { font-size: 28px; font-weight: 700; margin-bottom: 30px; }
-
   .input-bar { flex-shrink: 0; padding: 16px 20px 20px; }
   .input-box {
     max-width: 760px; margin: 0 auto;
     background: #fff; border: 1px solid #e5e5e5; border-radius: 16px;
-    padding: 16px 16px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    padding: 16px 16px 12px; box-shadow: 0 2px 12px rgba(0,0,0,.04);
   }
   .input-box textarea {
     width: 100%; border: none; outline: none; resize: none;
@@ -115,34 +114,34 @@
   .typing span:nth-child(2) { animation-delay: .2s; }
   .typing span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100% { opacity: .3; } 40% { opacity: 1; } }
+  .layout { display: flex; flex: 1; overflow: hidden; }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <button class="icon-btn" id="toggleSidebar" title="收起/展开">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-  </button>
-  <div class="logo"><img src="logo.png" style="width:28px;height:28px;border-radius:6px;vertical-align:middle;margin-right:8px">AETHER</div>
-  <div class="spacer"></div>
-  <a href="index.html">← 返回官网</a>
-</div>
-
-<div class="main">
+<div class="layout">
   <div class="sidebar" id="sidebar">
-    <div class="new-chat" id="newChat">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-      开启新对话
+    <div class="sidebar-header">
+      <button class="new-chat-btn" onclick="newChat()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v19M5 12h19"/></svg>
+        开启新对话
+      </button>
     </div>
-    <div class="history">
-      <div class="history-title">历史对话</div>
-      <div id="historyList"></div>
-    </div>
+    <div class="chat-history" id="historyList"></div>
   </div>
 
-  <div class="content">
+  <div class="main">
+    <div class="topbar">
+      <button class="toggle-btn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <div class="logo"><img src="logo.png" style="width:28px;height:28px;border-radius:6px;vertical-align:middle;margin-right:8px">AETHER</div>
+      <div class="spacer"></div>
+      <a href="index.html">← 返回官网</a>
+    </div>
+
     <div class="center-area" id="centerArea">
-      <div class="offline-warn" id="warn">⚠️ 后端未连接。运行 <code>python server.py</code>。</div>
+      <div class="offline-warn" id="warn">⚠️ 后端未连接（localhost:8000）。运行 <code>python server.py</code> 启动。</div>
       <h1>HI,好久不见~</h1>
       <div class="input-box">
         <textarea id="input" rows="1" placeholder="给 AETHER 布置一个任务…"></textarea>
@@ -158,7 +157,7 @@
       </div>
     </div>
 
-    <div class="chat" id="chat" style="display:none">
+    <div class="chat" id="chat">
       <div class="chat-inner" id="chatInner"></div>
     </div>
 
@@ -166,10 +165,6 @@
       <div class="input-box">
         <textarea id="input2" rows="1" placeholder="继续对话…"></textarea>
         <div class="input-box-bottom">
-          <div class="preset-chips">
-            <button data-q="用 Python 写一个快速排序">写代码</button>
-            <button data-q="帮我写一条朋友圈文案">写文案</button>
-          </div>
           <button class="send-btn" id="send2" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
           </button>
@@ -181,49 +176,48 @@
 
 <script>
 const sidebar = document.getElementById('sidebar');
-const toggleBtn = document.getElementById('toggleSidebar');
-const newChatBtn = document.getElementById('newChat');
 const centerArea = document.getElementById('centerArea');
 const chat = document.getElementById('chat');
 const chatInner = document.getElementById('chatInner');
 const inputBar = document.getElementById('inputBar');
 const input = document.getElementById('input');
-const send = document.getElementById('send');
 const input2 = document.getElementById('input2');
+const send = document.getElementById('send');
 const send2 = document.getElementById('send2');
 const warn = document.getElementById('warn');
 const historyList = document.getElementById('historyList');
 
 let conversations = JSON.parse(localStorage.getItem('aether_chats') || '[]');
-let currentChat = null;
+let currentId = null;
 
-toggleBtn.addEventListener('click', () => sidebar.classList.toggle('closed'));
-newChatBtn.addEventListener('click', newChat);
+function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
 
 function renderHistory() {
   historyList.innerHTML = '';
   conversations.forEach((c, i) => {
     const div = document.createElement('div');
-    div.className = 'history-item' + (currentChat === i ? ' active' : '');
+    div.className = 'chat-history-item' + (c.id === currentId ? ' active' : '');
     div.textContent = c.title || '新对话';
-    div.addEventListener('click', () => loadChat(i));
+    div.onclick = () => loadChat(c.id);
     historyList.appendChild(div);
   });
 }
 
 function newChat() {
-  currentChat = null;
+  currentId = null;
+  chatInner.innerHTML = '';
   centerArea.style.display = 'flex';
   chat.style.display = 'none';
   inputBar.style.display = 'none';
   input.value = '';
-  chatInner.innerHTML = '';
+  input.dispatchEvent(new Event('input'));
   renderHistory();
 }
 
-function loadChat(idx) {
-  currentChat = idx;
-  const c = conversations[idx];
+function loadChat(id) {
+  const c = conversations.find(x => x.id === id);
+  if (!c) return;
+  currentId = id;
   centerArea.style.display = 'none';
   chat.style.display = 'block';
   inputBar.style.display = 'block';
@@ -242,38 +236,39 @@ function addMsg(role, text) {
   return div;
 }
 
-function bindInput(inp, snd) {
-  inp.addEventListener('input', () => {
-    snd.disabled = !inp.value.trim();
-    inp.style.height = 'auto';
-    inp.style.height = Math.min(inp.scrollHeight, 160) + 'px';
+[input, input2].forEach(el => {
+  el.addEventListener('input', () => {
+    const s = el === input ? send : send2;
+    s.disabled = !el.value.trim();
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   });
-  inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(inp, snd); }
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(el === input ? input.value : input2.value); }
   });
-  snd.addEventListener('click', () => doSend(inp, snd));
-  inp.parentElement.querySelectorAll('.preset-chips button').forEach(b => {
-    b.addEventListener('click', () => { inp.value = b.dataset.q; inp.dispatchEvent(new Event('input')); doSend(inp, snd); });
-  });
-}
-bindInput(input, send);
-bindInput(input2, send2);
+});
+send.addEventListener('click', () => doSend(input.value));
+send2.addEventListener('click', () => doSend(input2.value));
+document.querySelectorAll('.preset-chips button').forEach(b => {
+  b.addEventListener('click', () => { input.value = b.dataset.q; input.dispatchEvent(new Event('input')); doSend(input.value); });
+});
 
-async function doSend(inp, snd) {
-  const text = inp.value.trim();
+async function doSend(text) {
+  text = text.trim();
   if (!text) return;
-  inp.value = '';
-  inp.dispatchEvent(new Event('input'));
+  input.value = ''; input2.value = '';
+  input.dispatchEvent(new Event('input')); input2.dispatchEvent(new Event('input'));
 
   centerArea.style.display = 'none';
   chat.style.display = 'block';
   inputBar.style.display = 'block';
 
-  if (currentChat === null) {
-    conversations.unshift({title: text.slice(0, 20), messages: []});
-    currentChat = 0;
+  if (!currentId) {
+    currentId = Date.now().toString();
+    conversations.unshift({id: currentId, title: text.slice(0,20), messages: []});
   }
-  conversations[currentChat].messages.push({role: 'user', content: text});
+  const conv = conversations.find(x => x.id === currentId);
+  conv.messages.push({role: 'user', content: text});
 
   addMsg('user', text);
   const assistant = addMsg('assistant', '<div class="typing"><span></span><span></span><span></span></div>');
@@ -281,19 +276,18 @@ async function doSend(inp, snd) {
 
   try {
     const r = await fetch('http://127.0.0.1:8000/chat', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, history: conversations[currentChat].messages.slice(0, -1)})
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message: text, history: conv.messages.slice(0,-1)})
     });
     if (!r.ok) throw new Error(r.status);
     const data = await r.json();
     bubble.textContent = data.reply;
-    conversations[currentChat].messages.push({role: 'assistant', content: data.reply});
+    conv.messages.push({role: 'assistant', content: data.reply});
   } catch (e) {
     warn.style.display = 'block';
-    bubble.innerHTML = '⚠️ 无法连接后端。运行 <code>python server.py</code>。';
+    bubble.innerHTML = '⚠️ 后端未连接。';
   }
-  localStorage.setItem('aether_chats', JSON.stringify(conversations.slice(0, 20)));
+  localStorage.setItem('aether_chats', JSON.stringify(conversations));
   renderHistory();
   chat.scrollTop = chat.scrollHeight;
 }
