@@ -50,11 +50,45 @@
   }
   .chat-item:hover { background: #f5f5f5; }
   .chat-item.active { background: #e8f0fe; color: #1a1a1a; }
-  .chat-item .del {
-    opacity: 0; color: #999; font-size: 14px; padding: 0 4px;
+  .chat-item .title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-item .pin { font-size: 11px; color: #999; margin-right: 4px; }
+  .chat-item .menu-btn {
+    opacity: 0; background: none; border: none; cursor: pointer;
+    color: #666; font-size: 16px; padding: 0 4px; line-height: 1; flex-shrink: 0;
   }
-  .chat-item:hover .del { opacity: 1; }
-  .chat-item .del:hover { color: #e53935; }
+  .chat-item:hover .menu-btn { opacity: 1; }
+  .chat-item.selected .check { opacity: 1; }
+  .chat-item .check {
+    opacity: 0; width: 16px; height: 16px; margin-right: 6px; flex-shrink: 0;
+    accent-color: #2563eb; cursor: pointer;
+  }
+
+  /* 右键菜单 / 三点菜单 */
+  .ctx-menu {
+    position: fixed; background: #fff; border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.12); padding: 6px 0;
+    min-width: 160px; z-index: 1000; font-size: 14px;
+  }
+  .ctx-menu button {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 9px 16px; background: none; border: none;
+    cursor: pointer; color: #333; font-size: 14px; text-align: left;
+  }
+  .ctx-menu button:hover { background: #f5f5f5; }
+  .ctx-menu button.danger { color: #dc2626; }
+  .ctx-menu button .ico { width: 18px; text-align: center; }
+
+  .batch-bar {
+    display: none; align-items: center; gap: 12px;
+    padding: 10px 12px; border-top: 1px solid #eee; background: #fff;
+  }
+  .batch-bar.show { display: flex; }
+  .batch-bar button {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 13px;
+  }
+  .batch-bar button.danger { color: #dc2626; border-color: #fca5a5; }
+  .batch-bar .count { flex: 1; color: #666; font-size: 13px; }
   .sidebar-footer {
     padding: 12px 16px; border-top: 1px solid #f0f0f0;
     display: flex; align-items: center; gap: 10px;
@@ -187,6 +221,11 @@
     </button>
   </div>
   <div class="chat-list" id="chatList"></div>
+  <div class="batch-bar" id="batchBar">
+    <button onclick="exitMulti()">取消</button>
+    <span class="count" id="batchCount">已选 0</span>
+    <button class="danger" onclick="deleteSelected()">删除所选</button>
+  </div>
   <div class="sidebar-footer">
     <div class="avatar">A</div>
     <div class="name">Aether User</div>
@@ -258,6 +297,8 @@ const warn = document.getElementById('warn');
 const STORAGE_KEY = 'aether_chats_v1';
 let chats = loadChats();
 let currentId = null;
+let multiMode = false;
+let selected = new Set();
 
 function loadChats() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -306,9 +347,10 @@ function selectChat(id) {
 }
 
 function deleteChat(id, ev) {
-  ev.stopPropagation();
+  ev && ev.stopPropagation();
   chats = chats.filter(c => c.id !== id);
   if (currentId === id) currentId = null;
+  selected.delete(id);
   saveChats();
   renderList();
   if (currentId == null) {
@@ -318,9 +360,114 @@ function deleteChat(id, ev) {
   }
 }
 
+function renameChat(id) {
+  const c = chats.find(x => x.id === id);
+  if (!c) return;
+  const name = prompt('重命名对话：', c.title);
+  if (name && name.trim()) {
+    c.title = name.trim();
+    saveChats();
+    renderList();
+  }
+}
+
+function togglePin(id) {
+  const c = chats.find(x => x.id === id);
+  if (!c) return;
+  c.pinned = !c.pinned;
+  c.updatedAt = Date.now();
+  saveChats();
+  renderList();
+}
+
+function shareChat(id) {
+  const c = chats.find(x => x.id === id);
+  if (!c) return;
+  const text = c.messages.map(m => (m.role === 'user' ? '你：' : 'AETHER：') + m.content).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    alert('对话内容已复制到剪贴板');
+  }).catch(() => prompt('复制以下内容：', text));
+}
+
+function enterMulti() { multiMode = true; selected.clear(); renderList(); }
+function exitMulti() { multiMode = false; selected.clear(); renderList(); }
+function toggleSelect(id, ev) {
+  ev.stopPropagation();
+  selected.has(id) ? selected.delete(id) : selected.add(id);
+  renderList();
+}
+function deleteSelected() {
+  if (!selected.size) return;
+  if (!confirm(`确定删除选中的 ${selected.size} 条对话？`)) return;
+  chats = chats.filter(c => !selected.has(c.id));
+  if (selected.has(currentId)) currentId = null;
+  selected.clear();
+  multiMode = false;
+  saveChats();
+  renderList();
+  if (currentId == null) {
+    centerArea.style.display = 'flex';
+    chatWrap.style.display = 'none';
+    chatInner.innerHTML = '';
+  }
+}
+
+let ctxEl = null;
+function openCtxMenu(id, x, y) {
+  closeCtxMenu();
+  const c = chats.find(t => t.id === id);
+  const menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  menu.innerHTML = `
+    <button data-a="rename"><span class="ico">✏️</span>重命名</button>
+    <button data-a="pin"><span class="ico">📌</span>${c && c.pinned ? '取消置顶' : '置顶'}</button>
+    <button data-a="share"><span class="ico">🔗</span>分享</button>
+    <button data-a="multi"><span class="ico">☑️</span>多选</button>
+    <button data-a="del" class="danger"><span class="ico">🗑</span>删除</button>
+  `;
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+  menu.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const a = btn.dataset.a;
+    closeCtxMenu();
+    if (a === 'rename') renameChat(id);
+    else if (a === 'pin') togglePin(id);
+    else if (a === 'share') shareChat(id);
+    else if (a === 'multi') enterMulti();
+    else if (a === 'del') deleteChat(id);
+  });
+  document.body.appendChild(menu);
+  ctxEl = menu;
+  setTimeout(() => document.addEventListener('click', closeCtxMenu), 0);
+}
+function closeCtxMenu() {
+  if (ctxEl) { ctxEl.remove(); ctxEl = null; }
+  document.removeEventListener('click', closeCtxMenu);
+}
+
 function renderList() {
   chatList.innerHTML = '';
+  document.getElementById('batchBar').classList.toggle('show', multiMode);
+  document.getElementById('batchCount').textContent = '已选 ' + selected.size;
+
   const now = new Date();
+  // 置顶项单独放最前
+  const pinned = chats.filter(c => c.pinned);
+  const rest = chats.filter(c => !c.pinned);
+
+  function drawGroup(label, items) {
+    if (!items.length) return;
+    const lab = document.createElement('div');
+    lab.className = 'group-label';
+    lab.textContent = label;
+    chatList.appendChild(lab);
+    items.forEach(c => chatList.appendChild(buildItem(c)));
+  }
+
+  if (pinned.length) drawGroup('置顶', pinned);
+
   const groups = [
     { label: '今天', test: t => isSameDay(new Date(t), now) },
     { label: '昨天', test: t => isSameDay(new Date(t), new Date(now - 86400000)) },
@@ -328,21 +475,30 @@ function renderList() {
     { label: '更早', test: () => true },
   ];
   for (const g of groups) {
-    const items = chats.filter(c => g.test(c.updatedAt));
-    if (!items.length) continue;
-    const lab = document.createElement('div');
-    lab.className = 'group-label';
-    lab.textContent = g.label;
-    chatList.appendChild(lab);
-    items.forEach(c => {
-      const item = document.createElement('div');
-      item.className = 'chat-item' + (c.id === currentId ? ' active' : '');
-      item.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.title)}</span><span class="del" title="删除">×</span>`;
-      item.onclick = () => selectChat(c.id);
-      item.querySelector('.del').onclick = (e) => deleteChat(c.id, e);
-      chatList.appendChild(item);
-    });
+    drawGroup(g.label, rest.filter(c => g.test(c.updatedAt)));
   }
+}
+
+function buildItem(c) {
+  const item = document.createElement('div');
+  item.className = 'chat-item' + (c.id === currentId ? ' active' : '') + (selected.has(c.id) ? ' selected' : '');
+  const check = multiMode
+    ? `<input type="checkbox" class="check" ${selected.has(c.id) ? 'checked' : ''}>`
+    : '';
+  const pin = c.pinned ? '<span class="pin">📌</span>' : '';
+  item.innerHTML = `${check}<span class="title">${pin}${escapeHtml(c.title)}</span><button class="menu-btn" title="更多">⋯</button>`;
+
+  item.onclick = (e) => {
+    if (multiMode) { toggleSelect(c.id, e); return; }
+    selectChat(c.id);
+  };
+  item.querySelector('.menu-btn').onclick = (e) => {
+    e.stopPropagation();
+    if (multiMode) { toggleSelect(c.id, e); return; }
+    const r = e.currentTarget.getBoundingClientRect();
+    openCtxMenu(c.id, r.right - 170, r.bottom + 4);
+  };
+  return item;
 }
 
 function isSameDay(a, b) {
