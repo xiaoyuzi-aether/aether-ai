@@ -112,8 +112,17 @@
   .send-btn:disabled { opacity: .3; cursor: not-allowed; }
   .send-btn svg { width: 16px; height: 16px; }
 
-  .chat { flex: 1; overflow-y: auto; display: none; }
-  .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px 120px; display: flex; flex-direction: column; gap: 20px; }
+  .chat-wrap { flex: 1; display: none; flex-direction: column; min-height: 0; }
+  .chat { flex: 1; overflow-y: auto; }
+  .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
+  .chat-input-bar {
+    flex-shrink: 0; padding: 12px 20px 18px; background: #f7f7f8;
+  }
+  .chat-input-bar .input-box {
+    max-width: 760px; margin: 0 auto;
+    background: #fff; border-radius: 16px;
+    padding: 12px 16px 10px; box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
   .msg { display: flex; gap: 12px; }
   .msg .avatar {
     width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
@@ -210,8 +219,24 @@
     </div>
   </div>
 
-  <div class="chat" id="chat">
-    <div class="chat-inner" id="chatInner"></div>
+  <div class="chat-wrap" id="chatWrap">
+    <div class="chat" id="chat">
+      <div class="chat-inner" id="chatInner"></div>
+    </div>
+    <div class="chat-input-bar">
+      <div class="input-box">
+        <textarea id="input2" rows="1" placeholder="继续追问 AETHER…"></textarea>
+        <div class="input-box-bottom">
+          <div class="preset-chips">
+            <button data-q="展开详细一点">展开</button>
+            <button data-q="换个角度">换角度</button>
+          </div>
+          <button class="send-btn" id="send2" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -220,11 +245,14 @@ marked.setOptions({ breaks: true, gfm: true });
 
 const sidebar = document.getElementById('sidebar');
 const centerArea = document.getElementById('centerArea');
+const chatWrap = document.getElementById('chatWrap');
 const chat = document.getElementById('chat');
 const chatInner = document.getElementById('chatInner');
 const chatList = document.getElementById('chatList');
 const input = document.getElementById('input');
 const send = document.getElementById('send');
+const input2 = document.getElementById('input2');
+const send2 = document.getElementById('send2');
 const warn = document.getElementById('warn');
 
 const STORAGE_KEY = 'aether_chats_v1';
@@ -252,7 +280,7 @@ function newChat() {
   currentId = c.id;
   renderList();
   centerArea.style.display = 'flex';
-  chat.style.display = 'none';
+  chatWrap.style.display = 'none';
   chatInner.innerHTML = '';
   input.focus();
 }
@@ -264,11 +292,11 @@ function selectChat(id) {
   renderList();
   if (c.messages.length === 0) {
     centerArea.style.display = 'flex';
-    chat.style.display = 'none';
+    chatWrap.style.display = 'none';
     chatInner.innerHTML = '';
   } else {
     centerArea.style.display = 'none';
-    chat.style.display = 'block';
+    chatWrap.style.display = 'flex';
     chatInner.innerHTML = '';
     c.messages.forEach(m => {
       if (m.role === 'user') addMsg('user', m.content);
@@ -285,7 +313,7 @@ function deleteChat(id, ev) {
   renderList();
   if (currentId == null) {
     centerArea.style.display = 'flex';
-    chat.style.display = 'none';
+    chatWrap.style.display = 'none';
     chatInner.innerHTML = '';
   }
 }
@@ -332,11 +360,27 @@ input.addEventListener('input', () => {
   input.style.height = Math.min(input.scrollHeight, 160) + 'px';
 });
 input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(input.value, input); }
 });
-send.addEventListener('click', sendMsg);
+send.addEventListener('click', () => sendMsg(input.value, input));
+
+input2.addEventListener('input', () => {
+  send2.disabled = !input2.value.trim();
+  input2.style.height = 'auto';
+  input2.style.height = Math.min(input2.scrollHeight, 120) + 'px';
+});
+input2.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(input2.value, input2); }
+});
+send2.addEventListener('click', () => sendMsg(input2.value, input2));
+
 document.querySelectorAll('.preset-chips button').forEach(b => {
-  b.addEventListener('click', () => { input.value = b.dataset.q; input.dispatchEvent(new Event('input')); sendMsg(); });
+  b.addEventListener('click', () => {
+    const target = (input.offsetParent === null) ? input2 : input;
+    target.value = b.dataset.q;
+    target.dispatchEvent(new Event('input'));
+    sendMsg(b.dataset.q, target);
+  });
 });
 
 function addMsg(role, text) {
@@ -357,15 +401,15 @@ function addMsg(role, text) {
   return div;
 }
 
-async function sendMsg() {
-  const text = input.value.trim();
+async function sendMsg(text, sourceInput) {
+  text = (text || '').trim();
   if (!text) return;
   if (!currentId) newChat();
   const c = getCurrent();
-  input.value = '';
-  input.dispatchEvent(new Event('input'));
+  sourceInput.value = '';
+  sourceInput.dispatchEvent(new Event('input'));
   centerArea.style.display = 'none';
-  chat.style.display = 'block';
+  chatWrap.style.display = 'flex';
   addMsg('user', text);
   c.messages.push({role: 'user', content: text});
   if (c.messages.filter(m => m.role === 'user').length === 1) {
@@ -395,6 +439,7 @@ async function sendMsg() {
     bubble.textContent = '⚠️ 无法连接后端。';
   }
   chat.scrollTop = chat.scrollHeight;
+  input2.focus();
 }
 
 // 初始化：有历史就打开最新一条，否则空白
