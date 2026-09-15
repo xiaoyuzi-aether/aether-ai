@@ -148,6 +148,22 @@
   }
   .send-btn.ready { background: #4f46e5; }
   .send-btn svg { width: 16px; height: 16px; }
+  .icon-btn {
+    background: transparent; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #999; padding: 6px; border-radius: 50%;
+  }
+  .icon-btn:hover { color: #333; background: #f0f0f0; }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .attach-chips { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .attach-chips.show { display: flex; }
+  .attach-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: #f0f4ff; color: #4f46e5;
+    border-radius: 12px; font-size: 12px; max-width: 220px;
+  }
+  .attach-chip .fn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attach-chip .rm { cursor: pointer; font-weight: bold; }
 
   /* 聊天视图 */
   .chat-wrap { flex: 1; display: none; flex-direction: column; min-height: 0; }
@@ -254,6 +270,7 @@
       <div class="greeting-text">HI,好久不见~</div>
     </div>
     <div class="input-container">
+      <div class="attach-chips" id="chips1"></div>
       <textarea class="chat-input" id="input1" placeholder="给 AETHER 发送消息" rows="1"></textarea>
       <div class="input-actions">
         <div class="left-actions">
@@ -261,6 +278,10 @@
           <button class="feature-btn" data-q="帮我写一条朋友圈文案">写文案</button>
         </div>
         <div class="right-actions">
+          <button class="icon-btn" id="attachBtn1" title="上传文件">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          </button>
+          <input type="file" id="fileInput1" multiple accept="*/*" style="display:none">
           <button class="send-btn" id="send1">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
           </button>
@@ -275,6 +296,7 @@
     </div>
     <div class="chat-input-bar">
       <div class="input-container">
+        <div class="attach-chips" id="chips2"></div>
         <textarea class="chat-input" id="input2" placeholder="继续追问 AETHER…" rows="1"></textarea>
         <div class="input-actions">
           <div class="left-actions">
@@ -282,6 +304,10 @@
             <button class="feature-btn" data-q="换个角度">换角度</button>
           </div>
           <div class="right-actions">
+            <button class="icon-btn" id="attachBtn2" title="上传文件">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+            <input type="file" id="fileInput2" multiple accept="*/*" style="display:none">
             <button class="send-btn" id="send2">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
             </button>
@@ -449,6 +475,42 @@ function bindInput(inp, btn) {
 }
 bindInput(input1, send1);
 bindInput(input2, send2);
+
+// ── 附件上传 ──
+const MAX_FILES = 50;
+const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+let attached = []; // {name, size}
+
+function fmtSize(b) {
+  if (b < 1024) return b + 'B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + 'KB';
+  return (b/1024/1024).toFixed(1) + 'MB';
+}
+function renderChips() {
+  [['chips1', input1], ['chips2', input2]].forEach(([cid]) => {
+    const box = document.getElementById(cid);
+    box.classList.toggle('show', attached.length > 0);
+    box.innerHTML = attached.map((f, i) =>
+      `<span class="attach-chip"><span>📎</span><span class="fn">${escapeHtml(f.name)}</span><span style="opacity:.6">${fmtSize(f.size)}</span><span class="rm" data-i="${i}">×</span></span>`
+    ).join('');
+    box.querySelectorAll('.rm').forEach(x => x.onclick = () => {
+      attached.splice(+x.dataset.i, 1); renderChips();
+    });
+  });
+}
+function handleFiles(list) {
+  const files = Array.from(list);
+  for (const f of files) {
+    if (attached.length >= MAX_FILES) { alert(`最多上传 ${MAX_FILES} 个文件`); break; }
+    if (f.size > MAX_SIZE) { alert(`"${f.name}" 超过 100MB，已跳过`); continue; }
+    attached.push({ name: f.name, size: f.size });
+  }
+  renderChips();
+}
+document.getElementById('attachBtn1').onclick = () => document.getElementById('fileInput1').click();
+document.getElementById('attachBtn2').onclick = () => document.getElementById('fileInput2').click();
+document.getElementById('fileInput1').onchange = e => { handleFiles(e.target.files); e.target.value=''; };
+document.getElementById('fileInput2').onchange = e => { handleFiles(e.target.files); e.target.value=''; };
 document.querySelectorAll('.feature-btn').forEach(b => {
   b.addEventListener('click', () => {
     const visible = welcome.style.display !== 'none' ? input1 : input2;
@@ -474,15 +536,24 @@ function addMsg(role, text) {
 }
 
 async function sendMsg(text, source) {
-  text = (text || '').trim(); if (!text) return;
+  text = (text || '').trim(); if (!text && !attached.length) return;
   if (!currentId) newChat();
   const c = getCurrent();
-  source.value = ''; source.dispatchEvent(new Event('input'));
+  const filesNote = attached.length
+    ? '\n\n[附件] ' + attached.map(f => `${f.name} (${fmtSize(f.size)})`).join('、')
+    : '';
+  const fullText = text + filesNote;
+  const displayText = text || '（上传了 ' + attached.length + ' 个文件）';
+  if (!currentId) newChat();
+  const c = getCurrent();
   welcome.style.display = 'none'; chatWrap.style.display = 'flex';
-  addMsg('user', text);
-  c.messages.push({ role: 'user', content: text });
-  if (c.messages.filter(m => m.role === 'user').length === 1) c.title = text.length > 22 ? text.slice(0, 22) + '…' : text;
+  addMsg('user', displayText);
+  c.messages.push({ role: 'user', content: displayText });
+  if (c.messages.filter(m => m.role === 'user').length === 1) c.title = (text || '附件').slice(0, 22);
   c.updatedAt = Date.now(); saveChats(); renderList();
+  const sentFiles = attached.slice();
+  attached = []; renderChips();
+  source.value = ''; source.dispatchEvent(new Event('input'));
 
   const assistant = addMsg('assistant', '');
   const bubble = assistant.querySelector('.bubble');
@@ -490,7 +561,7 @@ async function sendMsg(text, source) {
   try {
     const r = await fetch('http://localhost:8001/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, history: c.messages.slice(0, -1) })
+      body: JSON.stringify({ message: fullText, history: c.messages.slice(0, -1) })
     });
     if (!r.ok) throw new Error(r.status);
     const data = await r.json();
