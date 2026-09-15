@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -27,8 +27,6 @@
     font-weight: 700; font-size: 17px; color: #1a1a1a;
   }
   .sidebar-top .brand img { width: 28px; height: 28px; border-radius: 6px; }
-  .sidebar-top .icons { display: flex; gap: 4px; }
-  .sidebar-top .icons svg { width: 20px; height: 20px; color: #666; cursor: pointer; }
   .new-chat-wrap { padding: 0 12px 12px; }
   .new-chat-btn {
     width: 100%; padding: 10px; border-radius: 12px;
@@ -39,18 +37,23 @@
   }
   .new-chat-btn:hover { background: #f7f7f7; }
   .new-chat-btn svg { width: 16px; height: 16px; }
-  .section-label {
-    padding: 8px 20px 4px; font-size: 13px; color: #999;
-    display: flex; justify-content: space-between; align-items: center;
-  }
   .chat-list { flex: 1; overflow-y: auto; padding: 0 8px; }
+  .group-label {
+    padding: 12px 12px 4px; font-size: 12px; color: #999; font-weight: 500;
+  }
   .chat-item {
-    padding: 10px 12px; border-radius: 8px; font-size: 14px;
+    padding: 9px 12px; border-radius: 8px; font-size: 14px;
     color: #333; cursor: pointer; margin-bottom: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; justify-content: space-between;
   }
   .chat-item:hover { background: #f5f5f5; }
-  .chat-item.active { background: #f0f0f0; }
+  .chat-item.active { background: #e8f0fe; color: #1a1a1a; }
+  .chat-item .del {
+    opacity: 0; color: #999; font-size: 14px; padding: 0 4px;
+  }
+  .chat-item:hover .del { opacity: 1; }
+  .chat-item .del:hover { color: #e53935; }
   .sidebar-footer {
     padding: 12px 16px; border-top: 1px solid #f0f0f0;
     display: flex; align-items: center; gap: 10px;
@@ -61,7 +64,6 @@
     font-size: 13px; font-weight: 600; color: #666;
   }
   .sidebar-footer .name { font-size: 14px; flex: 1; }
-  .sidebar-footer .more { color: #999; font-size: 18px; cursor: pointer; }
 
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .topbar {
@@ -140,10 +142,6 @@
 <div class="sidebar" id="sidebar">
   <div class="sidebar-top">
     <div class="brand"><img src="logo.png">AETHER</div>
-    <div class="icons">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      
-    </div>
   </div>
   <div class="new-chat-wrap">
     <button class="new-chat-btn" onclick="newChat()">
@@ -151,17 +149,10 @@
       开启新对话
     </button>
   </div>
-  <div class="section-label">
-    <span>最近对话</span>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
-  </div>
-  <div class="chat-list" id="chatList">
-    <div class="chat-item active">当前对话</div>
-  </div>
+  <div class="chat-list" id="chatList"></div>
   <div class="sidebar-footer">
     <div class="avatar">A</div>
     <div class="name">Aether User</div>
-    <div class="more">···</div>
   </div>
 </div>
 
@@ -205,26 +196,105 @@ const chatList = document.getElementById('chatList');
 const input = document.getElementById('input');
 const send = document.getElementById('send');
 const warn = document.getElementById('warn');
-const history = [];
 
-function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
+const STORAGE_KEY = 'aether_chats_v1';
+let chats = loadChats();
+let currentId = null;
+
+function loadChats() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveChats() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+}
+function getCurrent() { return chats.find(c => c.id === currentId); }
+
 function newChat() {
-  const item = document.createElement('div');
-  item.className = 'chat-item';
-  item.textContent = '新对话 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
-  item.onclick = () => selectChat(item);
-  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-  chatList.insertBefore(item, chatList.firstChild);
+  const c = {
+    id: 'c_' + Date.now().toString(36),
+    title: '新对话',
+    messages: [],
+    updatedAt: Date.now(),
+  };
+  chats.unshift(c);
+  saveChats();
+  currentId = c.id;
+  renderList();
   centerArea.style.display = 'flex';
   chat.style.display = 'none';
   chatInner.innerHTML = '';
-  history.length = 0;
   input.focus();
 }
-function selectChat(el) {
-  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('active'));
-  el.classList.add('active');
+
+function selectChat(id) {
+  currentId = id;
+  const c = getCurrent();
+  if (!c) return;
+  renderList();
+  if (c.messages.length === 0) {
+    centerArea.style.display = 'flex';
+    chat.style.display = 'none';
+    chatInner.innerHTML = '';
+  } else {
+    centerArea.style.display = 'none';
+    chat.style.display = 'block';
+    chatInner.innerHTML = '';
+    c.messages.forEach(m => {
+      if (m.role === 'user') addMsg('user', m.content);
+      else addMsg('assistant', m.content);
+    });
+  }
 }
+
+function deleteChat(id, ev) {
+  ev.stopPropagation();
+  chats = chats.filter(c => c.id !== id);
+  if (currentId === id) currentId = null;
+  saveChats();
+  renderList();
+  if (currentId == null) {
+    centerArea.style.display = 'flex';
+    chat.style.display = 'none';
+    chatInner.innerHTML = '';
+  }
+}
+
+function renderList() {
+  chatList.innerHTML = '';
+  const now = new Date();
+  const groups = [
+    { label: '今天', test: t => isSameDay(new Date(t), now) },
+    { label: '昨天', test: t => isSameDay(new Date(t), new Date(now - 86400000)) },
+    { label: '7 天内', test: t => now - new Date(t) < 7 * 86400000 },
+    { label: '更早', test: () => true },
+  ];
+  for (const g of groups) {
+    const items = chats.filter(c => g.test(c.updatedAt));
+    if (!items.length) continue;
+    const lab = document.createElement('div');
+    lab.className = 'group-label';
+    lab.textContent = g.label;
+    chatList.appendChild(lab);
+    items.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'chat-item' + (c.id === currentId ? ' active' : '');
+      item.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.title)}</span><span class="del" title="删除">×</span>`;
+      item.onclick = () => selectChat(c.id);
+      item.querySelector('.del').onclick = (e) => deleteChat(c.id, e);
+      chatList.appendChild(item);
+    });
+  }
+}
+
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function toggleSidebar() { sidebar.classList.toggle('collapsed'); }
 
 input.addEventListener('input', () => {
   send.disabled = !input.value.trim();
@@ -243,7 +313,7 @@ function addMsg(role, text) {
   const div = document.createElement('div');
   div.className = 'msg ' + role;
   const avatar = role === 'user' ? '你' : '<img src="logo.png" style="width:20px;height:20px;border-radius:4px">';
-  div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble">${text}</div>`;
+  div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble">${escapeHtml(text)}</div>`;
   chatInner.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
   return div;
@@ -252,28 +322,47 @@ function addMsg(role, text) {
 async function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
+  if (!currentId) newChat();
+  const c = getCurrent();
   input.value = '';
   input.dispatchEvent(new Event('input'));
   centerArea.style.display = 'none';
   chat.style.display = 'block';
   addMsg('user', text);
-  history.push({role: 'user', content: text});
+  c.messages.push({role: 'user', content: text});
+  if (c.messages.filter(m => m.role === 'user').length === 1) {
+    c.title = text.length > 22 ? text.slice(0, 22) + '…' : text;
+  }
+  c.updatedAt = Date.now();
+  saveChats();
+  renderList();
+
   const assistant = addMsg('assistant', '<div class="typing"><span></span><span></span><span></span></div>');
   const bubble = assistant.querySelector('.bubble');
   try {
     const r = await fetch('http://localhost:8001/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: text, history: history.slice(0, -1)})
+      body: JSON.stringify({message: text, history: c.messages.slice(0, -1)})
     });
     if (!r.ok) throw new Error(r.status);
     const data = await r.json();
     bubble.textContent = data.reply;
-    history.push({role: 'assistant', content: data.reply});
+    c.messages.push({role: 'assistant', content: data.reply});
+    c.updatedAt = Date.now();
+    saveChats();
+    renderList();
   } catch (e) {
     warn.style.display = 'block';
     bubble.innerHTML = '⚠️ 无法连接后端。';
   }
   chat.scrollTop = chat.scrollHeight;
+}
+
+// 初始化：有历史就打开最新一条，否则空白
+if (chats.length) {
+  selectChat(chats[0].id);
+} else {
+  renderList();
 }
 </script>
 </body>
