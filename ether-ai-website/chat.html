@@ -229,12 +229,12 @@
     <span class="cnt" id="batchCount">已选 0</span>
     <button class="danger" onclick="deleteSelected()">删除所选</button>
   </div>
-  <div class="user-profile">
+  <div class="user-profile" id="userProfile">
     <div class="user-info">
       <div class="avatar">A</div>
       <span class="username">Aether User</span>
     </div>
-    <svg class="more" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" style="width:16px;height:16px;"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+    <svg class="more" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" style="width:16px;height:16px;cursor:pointer;"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
   </div>
 </aside>
 
@@ -507,6 +507,36 @@ async function sendMsg(text, source) {
 }
 
 if (chats.length) selectChat(chats[0].id); else renderList();
+
+document.getElementById('userProfile').addEventListener('click', e => {
+  e.stopPropagation();
+  closeCtxMenu();
+  const r = e.currentTarget.getBoundingClientRect();
+  const menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  menu.innerHTML = `
+    <button data-a="app">📱 手机下载 APP</button>
+    <button data-a="settings">⚙️ 系统设置</button>
+    <button data-a="help">💬 帮助与反馈</button>
+    <button data-a="logout" class="danger">🚪 退出登录</button>`;
+  menu.style.left = '16px';
+  menu.style.top = (r.top - 220) + 'px';
+  menu.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    const a = b.dataset.a; closeCtxMenu();
+    if (a === 'app') alert('APP 即将上线，敬请期待。');
+    else if (a === 'settings') alert('设置：后端地址 = http://localhost:8001');
+    else if (a === 'help') alert('反馈邮箱：2100393959@qq.com');
+    else if (a === 'logout') {
+      if (confirm('退出登录？将清空本地对话记录。')) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+  });
+  document.body.appendChild(menu); ctxEl = menu;
+  setTimeout(() => document.addEventListener('click', closeCtxMenu), 0);
+});
 </script>
 </body>
 </html>
