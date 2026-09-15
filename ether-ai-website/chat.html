@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AETHER · 以太</title>
 <link rel="icon" type="image/png" href="logo.png">
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -112,7 +113,7 @@
   .send-btn svg { width: 16px; height: 16px; }
 
   .chat { flex: 1; overflow-y: auto; display: none; }
-  .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; }
+  .chat-inner { max-width: 760px; margin: 0 auto; padding: 24px 20px 120px; display: flex; flex-direction: column; gap: 20px; }
   .msg { display: flex; gap: 12px; }
   .msg .avatar {
     width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
@@ -121,11 +122,38 @@
   .msg.user .avatar { background: #e8e8e8; color: #555; }
   .msg.assistant .avatar { background: transparent; }
   .msg .bubble {
-    padding: 10px 14px; border-radius: 10px; font-size: 15px; line-height: 1.65;
-    white-space: pre-wrap; word-break: break-word;
+    padding: 10px 14px; border-radius: 10px; font-size: 15px; line-height: 1.7;
+    word-break: break-word;
   }
   .msg.user .bubble { background: #fff; border: none; }
   .msg.assistant .bubble { background: transparent; padding: 10px 0; }
+
+  /* Markdown 渲染样式 */
+  .bubble h1, .bubble h2, .bubble h3, .bubble h4 { margin: 14px 0 8px; line-height: 1.3; }
+  .bubble h1 { font-size: 20px; } .bubble h2 { font-size: 18px; } .bubble h3 { font-size: 16px; }
+  .bubble p { margin: 8px 0; }
+  .bubble ul, .bubble ol { padding-left: 22px; margin: 8px 0; }
+  .bubble li { margin: 4px 0; }
+  .bubble code {
+    background: #f0f0f3; padding: 2px 6px; border-radius: 4px;
+    font-family: "SF Mono", Consolas, monospace; font-size: 13px;
+  }
+  .bubble pre {
+    background: #1e1e2e; color: #e4e4e4; padding: 14px; border-radius: 8px;
+    overflow-x: auto; margin: 10px 0;
+  }
+  .bubble pre code { background: transparent; color: inherit; padding: 0; }
+  .bubble table {
+    border-collapse: collapse; margin: 10px 0; width: 100%; font-size: 14px;
+  }
+  .bubble th, .bubble td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  .bubble th { background: #f5f5f5; }
+  .bubble blockquote {
+    border-left: 3px solid #ccc; padding-left: 12px; margin: 10px 0; color: #666;
+  }
+  .bubble strong { font-weight: 700; }
+  .bubble a { color: #2563eb; text-decoration: none; }
+
   .offline-warn {
     background: #fff3cd; border: 1px solid #ffc107; color: #856404;
     padding: 8px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none;
@@ -188,6 +216,8 @@
 </div>
 
 <script>
+marked.setOptions({ breaks: true, gfm: true });
+
 const sidebar = document.getElementById('sidebar');
 const centerArea = document.getElementById('centerArea');
 const chat = document.getElementById('chat');
@@ -313,7 +343,15 @@ function addMsg(role, text) {
   const div = document.createElement('div');
   div.className = 'msg ' + role;
   const avatar = role === 'user' ? '你' : '<img src="logo.png" style="width:20px;height:20px;border-radius:4px">';
-  div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble">${escapeHtml(text)}</div>`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (role === 'user') {
+    bubble.textContent = text;
+  } else {
+    bubble.innerHTML = marked.parse(text || '');
+  }
+  div.innerHTML = `<div class="avatar">${avatar}</div>`;
+  div.appendChild(bubble);
   chatInner.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
   return div;
@@ -337,8 +375,9 @@ async function sendMsg() {
   saveChats();
   renderList();
 
-  const assistant = addMsg('assistant', '<div class="typing"><span></span><span></span><span></span></div>');
+  const assistant = addMsg('assistant', '');
   const bubble = assistant.querySelector('.bubble');
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
   try {
     const r = await fetch('http://localhost:8001/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -346,14 +385,14 @@ async function sendMsg() {
     });
     if (!r.ok) throw new Error(r.status);
     const data = await r.json();
-    bubble.textContent = data.reply;
+    bubble.innerHTML = marked.parse(data.reply || '');
     c.messages.push({role: 'assistant', content: data.reply});
     c.updatedAt = Date.now();
     saveChats();
     renderList();
   } catch (e) {
     warn.style.display = 'block';
-    bubble.innerHTML = '⚠️ 无法连接后端。';
+    bubble.textContent = '⚠️ 无法连接后端。';
   }
   chat.scrollTop = chat.scrollHeight;
 }
