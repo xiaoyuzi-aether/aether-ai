@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+*.log
+
+# env / secrets
+.env
+.env.local
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
