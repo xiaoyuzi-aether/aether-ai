@@ -635,8 +635,6 @@ async function sendMsg(text, source) {
     : '';
   const fullText = text + filesNote;
   const displayText = text || '（上传了 ' + attached.length + ' 个文件）';
-  if (!currentId) newChat();
-  const c = getCurrent();
   welcome.style.display = 'none'; chatWrap.style.display = 'flex';
   addMsg('user', displayText);
   c.messages.push({ role: 'user', content: displayText });
