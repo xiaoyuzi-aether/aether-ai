@@ -15,7 +15,7 @@ import { mountApp } from './app.js';
 async function main() {
   const kernel = new Kernel({ version: '1.0.0' });
   const chatRepo = createLocalChatRepository();
-  const aiGateway = createHttpAiGateway({ baseUrl: 'http://localhost:8001' });
+  const aiGateway = createHttpAiGateway();
   const fileStore = createBrowserFileStore();
   const sendMessage = makeSendMessage({ chatRepo, aiGateway, bus: kernel.bus });
 

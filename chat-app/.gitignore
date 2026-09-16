@@ -9,6 +9,7 @@ dist/
 # env / secrets
 .env
 .env.local
+.env.*.local
 
 # os / editor
 .DS_Store

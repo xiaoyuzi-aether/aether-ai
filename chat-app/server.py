@@ -1,86 +1,132 @@
-"""AETHER 对话后端代理 — 前端静态页面通过此服务调 DeepSeek。
+"""AETHER 对话后端代理 — 前端通过此服务调 DeepSeek。
 
-API Key 从环境变量 OPENAI_API_KEY 读取，绝不写进代码，也不暴露给前端。
-前端只调 http://localhost:8001/chat 或 /chat/stream。
+环境变量：
+  DEEPSEEK_API_KEY  或  OPENAI_API_KEY   （必填）
+  DEEPSEEK_BASE_URL   默认 https://api.deepseek.com
+  DEEPSEEK_MODEL      默认 deepseek-chat
+  DEEPSEEK_FALLBACK_MODEL  默认 deepseek-reasoner
+  CORS_ORIGINS        逗号分隔白名单，默认 http://localhost:5173
+  PORT                Railway 注入
 """
 from __future__ import annotations
 import json
 import os
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 import httpx
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, JSONResponse
+
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY")
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEFAULT_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+FALLBACK_MODEL = os.getenv("DEEPSEEK_FALLBACK_MODEL", "deepseek-reasoner")
+
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,https://xiaoyuzi-aether.github.io",
+    ).split(",")
+    if o.strip()
+]
 
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
-DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
-API_KEY = os.getenv("OPENAI_API_KEY", "")
+if not DEEPSEEK_API_KEY:
+    print("[warn] DEEPSEEK_API_KEY not set — /chat will error")
 
-SYSTEM_PROMPT = "你是 AETHER，一个好奇心驱动的自主智能体内核。简洁专业地回答。"
 
-class ChatReq(BaseModel):
-    message: str
-    history: list[dict] = []
+def _headers() -> dict:
+    return {
+        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+        "Content-Type": "application/json",
+    }
 
-def build_messages(req: ChatReq) -> list[dict]:
-    msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for h in req.history[-10:]:
-        msgs.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-    msgs.append({"role": "user", "content": req.message})
-    return msgs
 
-@app.post("/chat")
-async def chat(req: ChatReq):
-    if not API_KEY:
-        return {"reply": "⚠️ 后端未配置 OPENAI_API_KEY 环境变量。"}
-    async with httpx.AsyncClient(timeout=60) as client:
-        r = await client.post(
-            DEEPSEEK_URL,
-            json={"model": "deepseek-chat", "messages": build_messages(req), "temperature": 0.7, "max_tokens": 1024},
-            headers={"Authorization": f"Bearer {API_KEY}"},
-        )
-        r.raise_for_status()
-        data = r.json()
-    return {"reply": data["choices"][0]["message"]["content"]}
+async def _stream_deepseek(messages, model):
+    payload = {
+        "model": model,
+        "messages": messages,
+        "stream": True,
+        "temperature": 0.7,
+    }
+    timeout = httpx.Timeout(60.0, connect=10.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        async with client.stream(
+            "POST",
+            f"{DEEPSEEK_BASE_URL}/chat/completions",
+            headers=_headers(),
+            json=payload,
+        ) as resp:
+            if resp.status_code >= 400:
+                text = await resp.aread()
+                raise RuntimeError(
+                    f"DeepSeek error {resp.status_code}: {text.decode(errors='ignore')[:500]}"
+                )
+            async for line in resp.aiter_lines():
+                if not line:
+                    continue
+                yield line + "\n\n"
 
-@app.post("/chat/stream")
-async def chat_stream(req: ChatReq):
-    if not API_KEY:
-        async def empty():
-            yield 'data: {"choices":[{"delta":{"content":"未配置 API key"}}]}\n\n'
-            yield 'data: [DONE]\n\n'
-        return StreamingResponse(empty(), media_type="text/event-stream")
-
-    async def gen():
-        async with httpx.AsyncClient(timeout=120) as client:
-            async with client.stream(
-                "POST",
-                DEEPSEEK_URL,
-                json={"model": "deepseek-chat", "messages": build_messages(req),
-                      "temperature": 0.7, "max_tokens": 1024, "stream": True},
-                headers={"Authorization": f"Bearer {API_KEY}"},
-            ) as r:
-                async for line in r.aiter_lines():
-                    if not line:
-                        continue
-                    if line.startswith("data: "):
-                        yield line + "\n\n"
-                    elif line == "data: [DONE]":
-                        yield "data: [DONE]\n\n"
-
-    return StreamingResponse(gen(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "model": "deepseek-chat" if API_KEY else "no-key"}
+    return {"ok": True, "model": DEFAULT_MODEL, "key_set": bool(DEEPSEEK_API_KEY)}
+
+
+@app.post("/chat")
+async def chat(req: Request):
+    body = await req.json()
+    messages = body.get("messages") or []
+    model = body.get("model") or DEFAULT_MODEL
+    payload = {"model": model, "messages": messages, "stream": False}
+    timeout = httpx.Timeout(60.0, connect=10.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.post(
+            f"{DEEPSEEK_BASE_URL}/chat/completions",
+            headers=_headers(),
+            json=payload,
+        )
+        if resp.status_code >= 400:
+            return JSONResponse(status_code=resp.status_code, content={"error": resp.text})
+        data = resp.json()
+    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    return {"content": content}
+
+
+@app.post("/chat/stream")
+async def chat_stream(req: Request):
+    body = await req.json()
+    messages = body.get("messages") or []
+    model = body.get("model") or DEFAULT_MODEL
+
+    async def event_generator():
+        sent_any = False
+        try:
+            async for chunk in _stream_deepseek(messages, model):
+                sent_any = True
+                yield chunk
+        except Exception as e:
+            if not sent_any and model != FALLBACK_MODEL:
+                try:
+                    async for chunk in _stream_deepseek(messages, FALLBACK_MODEL):
+                        yield chunk
+                    return
+                except Exception as fb_err:
+                    yield f"data: {json.dumps({'error': str(fb_err)})}\n\n"
+            else:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 
 if __name__ == "__main__":
     import uvicorn

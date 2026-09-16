@@ -8,9 +8,13 @@
     "build": "pnpm --filter @aether/ui build",
     "preview": "pnpm --filter @aether/ui preview",
     "server": "python server.py",
-    "depcruise": "depcruise packages --config .dependency-cruiser.cjs"
+    "depcruise": "depcruise packages --config .dependency-cruiser.cjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "dependency-cruiser": "^16.0.0"
+    "dependency-cruiser": "^16.0.0",
+    "vitest": "^2.1.0",
+    "jsdom": "^25.0.0"
   }
 }

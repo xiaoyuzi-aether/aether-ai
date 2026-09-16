@@ -35,3 +35,7 @@ export class EventBus {
     return re.test(event);
   }
 }
+
+export function createEventBus() {
+  return new EventBus();
+}
