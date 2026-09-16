@@ -1,8 +1,11 @@
+import { makeSendMessageStream } from '@aether/core';
+
 const $ = (id) => document.getElementById(id);
 
-export function mountApp({ kernel, chatRepo, createChat, sendMessage }) {
+export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway }) {
   const { bus } = kernel;
   const renderMarkdown = kernel.registry.resolve('markdown:renderer', 'default');
+  const sendStream = makeSendMessageStream({ chatRepo, aiGateway, bus });
 
   const els = {
     sidebar: $('sidebar'), backdrop: $('backdrop'),
@@ -112,17 +115,27 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage }) {
     els.welcome.style.display = 'none'; els.chatWrap.style.display = 'flex';
     const displayText = text || `（上传了 ${payload.attachments.length} 个文件）`;
     source.value = ''; source.dispatchEvent(new Event('input'));
-    const typing = renderTyping();
+
+    // 流式：先放一个空 AI 气泡，逐字填充
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'msg assistant';
+    const aiBubble = document.createElement('div');
+    aiBubble.className = 'bubble';
+    aiBubble.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+    aiDiv.innerHTML = '<div class="avatar">A</div>';
+    aiDiv.appendChild(aiBubble);
+    els.chatInner.appendChild(aiDiv);
+
+    let full = '';
     try {
-      await sendMessage(current, displayText, payload.attachments);
-      typing.remove();
+      await sendStream(current, displayText, payload.attachments, (delta, fullText) => {
+        full = fullText;
+        aiBubble.innerHTML = renderMarkdown(full);
+        els.chat.scrollTop = els.chat.scrollHeight;
+      });
     } catch (e) {
-      typing.remove();
       els.warn.style.display = 'block';
-      const err = document.createElement('div');
-      err.className = 'msg assistant';
-      err.innerHTML = `<div class="avatar">A</div><div class="bubble">⚠️ 无法连接后端。</div>`;
-      els.chatInner.appendChild(err);
+      aiBubble.innerHTML = '⚠️ 无法连接后端。';
     }
     els.chat.scrollTop = els.chat.scrollHeight;
     els.input2.focus();

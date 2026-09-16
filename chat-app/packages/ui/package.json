@@ -11,9 +11,7 @@
   "dependencies": {
     "@aether/kernel": "workspace:*",
     "@aether/core": "workspace:*",
-    "@aether/adapter-storage-local": "workspace:*",
-    "@aether/adapter-ai-http": "workspace:*",
-    "@aether/adapter-file-browser": "workspace:*",
+    "@aether/public-api": "workspace:*",
     "@aether/plugin-markdown": "workspace:*",
     "@aether/plugin-attachment": "workspace:*",
     "@aether/plugin-multi-select": "workspace:*",
