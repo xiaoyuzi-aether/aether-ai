@@ -1,0 +1,25 @@
+{
+  "name": "@aether/ui",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "@aether/kernel": "workspace:*",
+    "@aether/core": "workspace:*",
+    "@aether/adapter-storage-local": "workspace:*",
+    "@aether/adapter-ai-http": "workspace:*",
+    "@aether/adapter-file-browser": "workspace:*",
+    "@aether/plugin-markdown": "workspace:*",
+    "@aether/plugin-attachment": "workspace:*",
+    "@aether/plugin-multi-select": "workspace:*",
+    "marked": "^12.0.2"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}

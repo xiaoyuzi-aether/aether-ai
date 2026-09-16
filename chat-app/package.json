@@ -1,0 +1,16 @@
+{
+  "name": "aether",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @aether/ui dev",
+    "build": "pnpm --filter @aether/ui build",
+    "preview": "pnpm --filter @aether/ui preview",
+    "server": "python server.py",
+    "depcruise": "depcruise packages --config .dependency-cruiser.cjs"
+  },
+  "devDependencies": {
+    "dependency-cruiser": "^16.0.0"
+  }
+}

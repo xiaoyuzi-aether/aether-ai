@@ -1,0 +1,10 @@
+{
+  "name": "@aether/core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./ports": "./src/ports/index.js"
+  }
+}

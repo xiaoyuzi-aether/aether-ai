@@ -1,0 +1,14 @@
+{
+  "name": "@aether/public-api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "dependencies": {
+    "@aether/kernel": "workspace:*",
+    "@aether/core": "workspace:*",
+    "@aether/adapter-storage-local": "workspace:*",
+    "@aether/adapter-ai-http": "workspace:*",
+    "@aether/adapter-file-browser": "workspace:*"
+  }
+}
