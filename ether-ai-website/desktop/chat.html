@@ -251,12 +251,28 @@
 
     .welcome { padding: 10px 16px 20px; }
     .greeting { flex-direction: column; gap: 14px; margin-bottom: 30px; }
-    .greeting img { width: 44px; height: 44px; border-radius: 10px; }
-    .greeting-text { font-size: 22px; }
+    .greeting img { width: 56px; height: 56px; border-radius: 14px; }
+    .greeting-text { font-size: 22px; font-weight: 500; color: #101318; }
 
-    .input-container { border-radius: 22px; padding: 14px; }
-    .feature-btn { padding: 6px 10px; font-size: 12px; }
+    .input-container { border-radius: 24px; padding: 14px; box-shadow: none; border: none; background: #fff; }
+    .feature-btn { padding: 7px 12px; font-size: 13px; background: #EEF2FF; border-color: transparent; color: #2E6BE6; }
+    .feature-btn.active { background: #DDE6FF; }
     .send-btn { width: 36px; height: 36px; }
+
+    .mobile-icon-btn {
+      background: #fff !important; border: none !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06) !important;
+    }
+    .mobile-topbar { padding: 8px 12px; }
+    .voice-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #fff; border: 1px solid #e5e7eb;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .voice-btn svg { width: 18px; height: 18px; color: #555; }
+    #voiceBtn1 { display: flex !important; }
+    .chat-input-bar .voice-btn { display: flex !important; }
 
     .chat-inner { padding: 16px 14px; }
     .msg .bubble { font-size: 15px; }
@@ -335,17 +351,20 @@
 
   <div class="welcome" id="welcome">
     <div class="greeting">
-      <div class="greeting-text">HI,好久不见~</div>
+      <div class="greeting-text">你好，让我们开始聊天吧</div>
     </div>
     <div class="input-container">
       <div class="attach-chips" id="chips1"></div>
-      <textarea class="chat-input" id="input1" placeholder="给 AETHER 发送消息" rows="1"></textarea>
+      <textarea class="chat-input" id="input1" placeholder="发消息或按住说话" rows="1"></textarea>
       <div class="input-actions">
         <div class="left-actions">
           <button class="feature-btn" data-mode="think">深度思考</button>
           <button class="feature-btn" data-mode="search">联网搜索</button>
         </div>
         <div class="right-actions">
+          <button class="voice-btn" style="display:none" id="voiceBtn1" title="语音">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="12" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0"></path><line x1="12" y1="18" x2="12" y2="22"></line></svg>
+          </button>
           <button class="icon-btn" id="attachBtn1" title="上传文件">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
           </button>
