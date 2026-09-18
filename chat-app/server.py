@@ -1,12 +1,10 @@
-"""AETHER 对话后端代理 — 前端通过此服务调 DeepSeek。
-
-环境变量：
-  DEEPSEEK_API_KEY  或  OPENAI_API_KEY   （必填）
-  DEEPSEEK_BASE_URL   默认 https://api.deepseek.com
-  DEEPSEEK_MODEL      默认 deepseek-chat
-  DEEPSEEK_FALLBACK_MODEL  默认 deepseek-reasoner
-  CORS_ORIGINS        逗号分隔白名单，默认 http://localhost:5173
-  PORT                Railway 注入
+﻿"""AETHER 瀵硅瘽鍚庣浠ｇ悊 鈥?鍓嶇閫氳繃姝ゆ湇鍔¤皟 DeepSeek銆?
+鐜鍙橀噺锛?  DEEPSEEK_API_KEY  鎴? OPENAI_API_KEY   锛堝繀濉級
+  DEEPSEEK_BASE_URL   榛樿 https://api.deepseek.com
+  DEEPSEEK_MODEL      榛樿 deepseek-chat
+  DEEPSEEK_FALLBACK_MODEL  榛樿 deepseek-reasoner
+  CORS_ORIGINS        閫楀彿鍒嗛殧鐧藉悕鍗曪紝榛樿 http://localhost:5173
+  PORT                Railway 娉ㄥ叆
 """
 from __future__ import annotations
 import json
@@ -40,7 +38,7 @@ app.add_middleware(
 )
 
 if not DEEPSEEK_API_KEY:
-    print("[warn] DEEPSEEK_API_KEY not set — /chat will error")
+    print("[warn] DEEPSEEK_API_KEY not set 鈥?/chat will error")
 
 
 def _headers() -> dict:
@@ -82,7 +80,7 @@ async def health():
         "ok": True,
         "model": DEFAULT_MODEL,
         "key_set": bool(DEEPSEEK_API_KEY),
-        "version": "1.2.0",
+        "version": "1.2.1",
     }
 
 
@@ -137,3 +135,4 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8001"))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
