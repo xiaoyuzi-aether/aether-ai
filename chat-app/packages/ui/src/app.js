@@ -116,27 +116,27 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway 
     const displayText = text || `（上传了 ${payload.attachments.length} 个文件）`;
     source.value = ''; source.dispatchEvent(new Event('input'));
 
-    // 流式：先放一个空 AI 气泡，逐字填充
-    const aiDiv = document.createElement('div');
-    aiDiv.className = 'msg assistant';
-    const aiBubble = document.createElement('div');
-    aiBubble.className = 'bubble';
-    aiBubble.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
-    aiDiv.innerHTML = '<div class="avatar">A</div>';
-    aiDiv.appendChild(aiBubble);
-    els.chatInner.appendChild(aiDiv);
-
-    let full = '';
+    // 流式：onDelta 首次回调时（用户消息已渲染）插入 AI 占位并逐字填充；
+    // 流完成后 bus 事件会渲染完整回复，再移除占位
+    let typingEl = null;
     try {
       await sendStream(current, displayText, payload.attachments, (delta, fullText) => {
-        full = fullText;
-        aiBubble.innerHTML = renderMarkdown(full);
+        if (!typingEl) typingEl = renderTyping();
+        const bubble = typingEl.querySelector('.bubble');
+        bubble.innerHTML = renderMarkdown(fullText);
         els.chat.scrollTop = els.chat.scrollHeight;
       });
     } catch (e) {
       els.warn.style.display = 'block';
-      aiBubble.innerHTML = '⚠️ 无法连接后端。';
+      if (typingEl) typingEl.querySelector('.bubble').innerHTML = '⚠️ 无法连接后端。';
+      else {
+        const err = document.createElement('div');
+        err.className = 'msg assistant';
+        err.innerHTML = `<div class="avatar">A</div><div class="bubble">⚠️ 无法连接后端。</div>`;
+        els.chatInner.appendChild(err);
+      }
     }
+    if (typingEl) typingEl.remove();
     els.chat.scrollTop = els.chat.scrollHeight;
     els.input2.focus();
     renderList();
@@ -270,7 +270,7 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway 
     setTimeout(() => document.addEventListener('click', closeCtxMenu), 0);
   });
 
-  bus.on('chat:message:added', ({ message }) => { if (message.role === 'user') renderMessage(message); });
+  bus.on('chat:message:added', ({ message }) => { renderMessage(message); });
   bus.on('chat:ai:error', () => { els.warn.style.display = 'block'; });
   bus.on('attach:changed', ({ files }) => {
     state.attached = files; renderChips(files);
