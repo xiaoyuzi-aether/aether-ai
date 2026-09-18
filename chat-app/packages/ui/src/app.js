@@ -72,12 +72,10 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway 
   function renderMessage(m) {
     const div = document.createElement('div');
     div.className = 'msg ' + m.role;
-    const av = m.role === 'user' ? '你' : 'A';
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     if (m.role === 'user') bubble.textContent = m.content;
     else bubble.innerHTML = renderMarkdown(m.content);
-    div.innerHTML = `<div class="avatar">${av}</div>`;
     div.appendChild(bubble);
     els.chatInner.appendChild(div);
     return div;
@@ -85,7 +83,7 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway 
   function renderTyping() {
     const div = document.createElement('div');
     div.className = 'msg assistant';
-    div.innerHTML = `<div class="avatar">A</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    div.innerHTML = `<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
     els.chatInner.appendChild(div);
     els.chat.scrollTop = els.chat.scrollHeight;
     return div;
@@ -132,7 +130,7 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway 
       else {
         const err = document.createElement('div');
         err.className = 'msg assistant';
-        err.innerHTML = `<div class="avatar">A</div><div class="bubble">⚠️ 无法连接后端。</div>`;
+        err.innerHTML = `<div class="bubble">⚠️ 无法连接后端。</div>`;
         els.chatInner.appendChild(err);
       }
     }
