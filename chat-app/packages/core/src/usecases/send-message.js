@@ -39,10 +39,11 @@ export function makeSendMessageStream({ chatRepo, aiGateway, bus }) {
 
     let full = '';
     try {
-      full = await aiGateway.sendStream(
-        { message: text, history: chat.messages.slice(0, -1) },
-        (delta) => { full += delta; onDelta?.(delta, full); }
-      );
+      full = await aiGateway.sendStream({
+        message: text,
+        history: chat.messages.slice(0, -1),
+        onDelta: (delta) => { full += delta; onDelta?.(delta, full); },
+      });
     } catch (e) {
       bus.emit('chat:ai:error', { chatId: chat.id, error: e });
       throw e;
