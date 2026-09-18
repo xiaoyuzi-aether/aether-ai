@@ -78,7 +78,12 @@ async def _stream_deepseek(messages, model):
 
 @app.get("/health")
 async def health():
-    return {"ok": True, "model": DEFAULT_MODEL, "key_set": bool(DEEPSEEK_API_KEY)}
+    return {
+        "ok": True,
+        "model": DEFAULT_MODEL,
+        "key_set": bool(DEEPSEEK_API_KEY),
+        "version": "1.2.0",
+    }
 
 
 @app.post("/chat")
