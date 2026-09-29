@@ -2,3 +2,10 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 httpx==0.27.2
 pydantic>=2.6
+
+# === GEO 插件可选重依赖（按需安装；Railway 免费套餐内存可能不够）===
+# playwright>=1.40.0            # /fetch/body 抓正文（还要 playwright install chromium）
+# sentence-transformers>=2.2.0   # /embed/batch 生成向量（首次下载 ~90MB 模型）
+# numpy
+# pgvector>=0.2.0
+# psycopg[binary]>=3.1.0

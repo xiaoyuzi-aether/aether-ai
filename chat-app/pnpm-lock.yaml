@@ -30,6 +30,12 @@ importers:
 
   packages/plugins/attachment: {}
 
+  packages/plugins/content-fetcher: {}
+
+  packages/plugins/content-pipeline: {}
+
+  packages/plugins/geo-analyzer: {}
+
   packages/plugins/markdown: {}
 
   packages/plugins/multi-select: {}
@@ -63,6 +69,15 @@ importers:
       '@aether/plugin-attachment':
         specifier: workspace:*
         version: link:../plugins/attachment
+      '@aether/plugin-content-fetcher':
+        specifier: workspace:*
+        version: link:../plugins/content-fetcher
+      '@aether/plugin-content-pipeline':
+        specifier: workspace:*
+        version: link:../plugins/content-pipeline
+      '@aether/plugin-geo-analyzer':
+        specifier: workspace:*
+        version: link:../plugins/geo-analyzer
       '@aether/plugin-markdown':
         specifier: workspace:*
         version: link:../plugins/markdown

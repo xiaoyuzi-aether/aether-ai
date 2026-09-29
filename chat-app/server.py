@@ -131,6 +131,229 @@ async def chat_stream(req: Request):
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
+# ============================================================
+# GEO 插件后端端点（懒加载，未装依赖时返回 503，不影响主聊天）
+# ============================================================
+import re as _re
+import asyncio
+import hashlib
+import xml.etree.ElementTree as _ET
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from pydantic import BaseModel
+
+
+class FetchBodyRequest(BaseModel):
+    url: str
+
+
+# ── /fetch/rss：RSS/Atom 订阅源抓取（标准库解析，零额外依赖）──
+RSS_SOURCES = [
+    {"key": "hackernews", "url": "https://hnrss.org/frontpage"},
+    {"key": "36kr", "url": "https://36kr.com/feed"},
+    {"key": "sspai", "url": "https://sspai.com/feed"},
+    {"key": "infoq_cn", "url": "https://www.infoq.cn/feed"},
+    {"key": "github_trending", "url": "https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml"},
+    {"key": "bbc_top", "url": "https://feeds.bbci.co.uk/news/rss.xml"},
+    {"key": "wallstreetcn", "url": "https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=30"},
+]
+
+
+def _strip_html(html: str) -> str:
+    if not html:
+        return ""
+    s = _re.sub(r"<script[\s\S]*?</script>", " ", html, flags=_re.I)
+    s = _re.sub(r"<style[\s\S]*?</style>", " ", s, flags=_re.I)
+    s = _re.sub(r"<[^>]+>", " ", s)
+    for a, b in (("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"), ("&gt;", ">"), ("&quot;", '"'), ("&#39;", "'")):
+        s = s.replace(a, b)
+    return _re.sub(r"\s{2,}", " ", s).strip()
+
+
+def _to_ts(value: str) -> int:
+    if not value:
+        return 0
+    try:
+        dt = parsedate_to_datetime(value)  # RSS RFC822
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        pass
+    try:
+        v = value.replace("Z", "+00:00") if value.endswith("Z") else value
+        dt = datetime.fromisoformat(v)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return int(dt.timestamp() * 1000)
+    except Exception:
+        return 0
+
+
+def _parse_rss_xml(text: str, source_key: str):
+    root = _ET.fromstring(text)
+    ATOM = "{http://www.w3.org/2005/Atom}"
+    atom_entries = root.findall(f".//{ATOM}entry")
+    is_atom = len(atom_entries) > 0
+    entries = atom_entries if is_atom else (root.findall("./channel/item") or root.findall("./item"))
+    items = []
+    for node in entries:
+        if is_atom:
+            title = (node.findtext(f"{ATOM}title") or "").strip()
+            link_el = node.find(f"{ATOM}link")
+            url = (link_el.get("href") if link_el is not None else "") or ""
+            content = _strip_html(
+                node.findtext(f"{ATOM}summary") or node.findtext(f"{ATOM}content") or ""
+            )
+            pub = node.findtext(f"{ATOM}published") or node.findtext(f"{ATOM}updated") or ""
+            guid = node.findtext(f"{ATOM}id") or url
+            author = (node.findtext(f"{ATOM}author/{ATOM}name") or "").strip()
+            cats = [c.text or "" for c in node.findall(f"{ATOM}category") if c.text]
+        else:
+            title = (node.findtext("title") or "").strip()
+            url = (node.findtext("link") or node.findtext("guid") or "").strip()
+            content = _strip_html(
+                node.findtext("description") or node.findtext("content:encoded")
+                or node.findtext("{http://purl.org/rss/1.0/modules/content/}encoded") or ""
+            )
+            pub = node.findtext("pubDate") or node.findtext("dc:date") or ""
+            guid = node.findtext("guid") or url
+            author = (node.findtext("dc:creator") or node.findtext("author") or "").strip()
+            cats = [c.text or "" for c in node.findall("category") if c.text]
+        published_at = _to_ts(pub)
+        item_id = hashlib.md5(f"{source_key}:{guid or title}".encode("utf-8")).hexdigest()
+        items.append({
+            "id": item_id,
+            "title": title,
+            "content": content,
+            "source": source_key,
+            "sourceUrl": url,
+            "author": author or None,
+            "publishedAt": published_at or int(__import__("time").time() * 1000),
+            "tags": [c.lower() for c in cats],
+            "heat": 0,
+        })
+    return items
+
+
+def _parse_wallstreetcn(data: dict, source_key: str):
+    items = []
+    for live in (data.get("lives") or [])[:50]:
+        content = _strip_html(live.get("content") or "")
+        if not content:
+            continue
+        title = (live.get("title") or content[:40]).strip()
+        published_at = live.get("created_at") or 0
+        if isinstance(published_at, str):
+            published_at = int(published_at) if published_at.isdigit() else 0
+        items.append({
+            "id": hashlib.md5(f"{source_key}:{live.get('id') or content[:40]}".encode("utf-8")).hexdigest(),
+            "title": title,
+            "content": content,
+            "source": source_key,
+            "sourceUrl": "",
+            "author": None,
+            "publishedAt": published_at or int(__import__("time").time() * 1000),
+            "tags": [],
+            "heat": 0,
+        })
+    return items
+
+
+class FetchRssRequest(BaseModel):
+    sources: list | None = None
+    limit: int = 20
+
+
+@app.post("/fetch/rss")
+async def fetch_rss(req: FetchRssRequest):
+    """并发抓取多个 RSS/Atom 源，返回 ContentItem[]（与前端插件契约一致）。"""
+    sources = [s for s in RSS_SOURCES if not req.sources or s["key"] in req.sources]
+    if not sources:
+        return {"items": [], "count": 0}
+
+    async def grab(src: dict):
+        try:
+            timeout = httpx.Timeout(15.0, connect=10.0)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.get(
+                    src["url"],
+                    headers={"User-Agent": "AETHER/1.0 (+https://github.com/aether)"},
+                )
+                resp.raise_for_status()
+                if src["key"] == "wallstreetcn":
+                    return _parse_wallstreetcn(resp.json(), src["key"])
+                return _parse_rss_xml(resp.text, src["key"])
+        except Exception as e:
+            print(f"[rss] {src['key']} failed: {e}")
+            return []
+
+    results: list = []
+    for batch in await asyncio.gather(*(grab(s) for s in sources)):
+        results.extend(batch)
+    results.sort(key=lambda x: x["publishedAt"], reverse=True)
+    limit = max(1, min(req.limit, 100))
+    return {"items": results[:limit], "count": min(len(results), limit)}
+
+
+_playwright_cm = None
+
+
+@app.post("/fetch/body")
+async def fetch_body(req: FetchBodyRequest):
+    """用 Playwright 渲染页面并提取正文，绕过 Cloudflare 等反爬机制。"""
+    try:
+        from playwright.async_api import async_playwright
+    except ImportError:
+        return JSONResponse(status_code=503, content={"error": "playwright 未安装"})
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            )
+            await page.goto(req.url, wait_until="networkidle", timeout=20000)
+            title = await page.title()
+            content = await page.evaluate("""() => {
+                const article = document.querySelector('article')
+                    || document.querySelector('[class*="content"]')
+                    || document.querySelector('[class*="article"]')
+                    || document.body;
+                return article.innerText;
+            }""")
+            await browser.close()
+            content = _re.sub(r'\n{3,}', '\n\n', content).strip()
+            return {"title": title, "content": content, "publishedAt": None, "tags": []}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": f"抓取失败: {e}"})
+
+
+_embed_model = None
+
+
+def _get_embed_model():
+    global _embed_model
+    if _embed_model is None:
+        from sentence_transformers import SentenceTransformer
+        _embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+    return _embed_model
+
+
+class EmbedBatchRequest(BaseModel):
+    texts: list
+
+
+@app.post("/embed/batch")
+async def embed_batch(req: EmbedBatchRequest):
+    """批量生成文本向量，用于语义去重。"""
+    if not req.texts:
+        return {"embeddings": []}
+    try:
+        model = _get_embed_model()
+    except ImportError:
+        return JSONResponse(status_code=503, content={"error": "sentence-transformers 未安装"})
+    vectors = model.encode(req.texts, normalize_embeddings=True)
+    return {"embeddings": [v.tolist() for v in vectors]}
+
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8001"))

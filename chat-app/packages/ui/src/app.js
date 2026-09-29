@@ -305,5 +305,115 @@ export function mountApp({ kernel, chatRepo, createChat, sendMessage, aiGateway 
     });
   }
 
+  // ── GEO 分析面板 ──
+  function renderGeoReport(el, r) {
+    const sent = r.sentimentBreakdown || {};
+    const tagCls = (s) => (s === 'positive' ? 'pos' : s === 'negative' ? 'neg' : s === 'neutral' ? 'neu' : 'abs');
+    const sentimentTag = (s) => `<span class="geo-tag ${tagCls(s)}">${s}</span>`;
+    const comps = (r.topCompetitors || []).map(c =>
+      `<tr><td>${escapeHtml(c.name)}</td><td>${c.mentionCount}</td></tr>`).join('') ||
+      `<tr><td colspan="2" style="color:#999">暂无竞品被提及</td></tr>`;
+    const rows = (r.keywordDetails || []).map(k =>
+      `<tr><td>${escapeHtml(k.keyword)}</td><td>${k.mentioned ? '✅' : '❌'}</td>` +
+      `<td>${k.position > 0 ? '第 ' + k.position + ' 段' : '—'}</td>` +
+      `<td>${sentimentTag(k.sentiment)}</td><td>${escapeHtml((k.competitors || []).join(', ') || '—')}</td></tr>`
+    ).join('') || `<tr><td colspan="5" style="color:#999">暂无数据</td></tr>`;
+
+    el.innerHTML = `
+      <div class="geo-kpi">
+        <div class="kpi"><div class="v">${r.totalProbes || 0}</div><div class="l">探测次数</div></div>
+        <div class="kpi"><div class="v">${r.mentionRate ?? 0}%</div><div class="l">提及率</div></div>
+        <div class="kpi"><div class="v">${r.avgMentionPosition > 0 ? r.avgMentionPosition : '—'}</div><div class="l">平均位置(段)</div></div>
+      </div>
+      <h3 style="margin:14px 0 8px;font-size:13px;color:#2E6BE6;">情感分布</h3>
+      <div>${['positive','neutral','negative','absent'].map(s =>
+        `<span class="geo-tag ${tagCls(s)}">${s}: ${sent[s] || 0}</span>`).join('')}</div>
+      <h3 style="margin:14px 0 8px;font-size:13px;color:#2E6BE6;">竞品被提及 Top</h3>
+      <table class="geo-table"><tr><th>竞品</th><th>次数</th></tr>${comps}</table>
+      <h3 style="margin:14px 0 8px;font-size:13px;color:#2E6BE6;">关键词明细</h3>
+      <table class="geo-table"><tr><th>关键词</th><th>提及</th><th>位置</th><th>情感</th><th>竞品</th></tr>${rows}</table>`;
+  }
+
+  function initGeoPanel() {
+    const panel = document.createElement('div');
+    panel.className = 'geo-panel';
+    panel.innerHTML = `
+      <div class="geo-panel-head">
+        <div class="geo-title">GEO 分析面板</div>
+        <button class="geo-close" title="关闭">×</button>
+      </div>
+      <div class="geo-body">
+        <section class="geo-section">
+          <h3>内容抓取（RSS）</h3>
+          <div class="geo-row">
+            <input id="geoLimit" type="number" min="1" max="50" value="10" title="抓取条数">
+            <button class="geo-btn" id="geoFetchBtn">抓取内容</button>
+          </div>
+          <div class="geo-log" id="geoFetchLog">点击按钮，从 7 个 RSS 源抓取最新内容。</div>
+          <ul class="geo-list" id="geoFetchList"></ul>
+        </section>
+        <section class="geo-section">
+          <h3>品牌可见度探测</h3>
+          <div class="geo-row">
+            <input id="geoBrand" type="text" value="AETHER" placeholder="品牌名">
+            <input id="geoIndustry" type="text" value="AI 聊天应用" placeholder="行业">
+          </div>
+          <button class="geo-btn" id="geoRunBtn">运行 GEO 探测</button>
+          <div class="geo-log" id="geoProg">填写品牌与行业后运行，用多个模型盲测。</div>
+          <div class="geo-report" id="geoReport"></div>
+        </section>
+      </div>`;
+    document.body.appendChild(panel);
+
+    const open = () => panel.classList.toggle('open');
+    document.querySelectorAll('.geo-toggle').forEach(b => b.addEventListener('click', open));
+    panel.querySelector('.geo-close').addEventListener('click', open);
+
+    const fetchLog = panel.querySelector('#geoFetchLog');
+    const fetchList = panel.querySelector('#geoFetchList');
+    const fetchBtn = panel.querySelector('#geoFetchBtn');
+    const limitEl = panel.querySelector('#geoLimit');
+
+    fetchBtn.addEventListener('click', () => {
+      fetchBtn.disabled = true;
+      fetchLog.textContent = '抓取中，请稍候…';
+      fetchList.innerHTML = '';
+      bus.emit('command:content:fetch', { options: { limit: +limitEl.value || 10 } });
+    });
+    bus.on('content:fetched', ({ items, count }) => {
+      fetchBtn.disabled = false;
+      const sources = [...new Set((items || []).map(i => i.source))];
+      fetchLog.textContent = `已抓取 ${count} 条内容` + (sources.length ? `，来源：${sources.join(' / ')}` : '') + '。';
+      fetchList.innerHTML = (items || []).slice(0, 20).map(i =>
+        `<li title="${escapeHtml(i.title)}">[${escapeHtml(i.source)}] ${escapeHtml(i.title)}</li>`
+      ).join('') || '<li style="color:#999">未抓到内容（后端可能未就绪）</li>';
+    });
+
+    const progEl = panel.querySelector('#geoProg');
+    const reportEl = panel.querySelector('#geoReport');
+    const runBtn = panel.querySelector('#geoRunBtn');
+    const brandEl = panel.querySelector('#geoBrand');
+    const industryEl = panel.querySelector('#geoIndustry');
+
+    runBtn.addEventListener('click', () => {
+      runBtn.disabled = true;
+      reportEl.innerHTML = '';
+      progEl.textContent = '正在提取关键词…';
+      bus.emit('command:geo:run', {
+        brand: brandEl.value.trim() || 'AETHER',
+        industry: industryEl.value.trim() || 'AI 聊天应用',
+      });
+    });
+    bus.on('geo:progress', ({ stage, message, total }) => {
+      progEl.textContent = message + (total ? `（共 ${total} 项）` : '');
+    });
+    bus.on('geo:report:ready', (report) => {
+      runBtn.disabled = false;
+      progEl.textContent = `报告生成完毕（${new Date(report.generatedAt).toLocaleString()}）`;
+      renderGeoReport(reportEl, report);
+    });
+  }
+  initGeoPanel();
+
   return { state, newChat, selectChat };
 }
