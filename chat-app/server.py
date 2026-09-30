@@ -48,6 +48,23 @@ def _headers() -> dict:
     }
 
 
+# AETHER（以太）身份设定：覆盖模型默认的自我介绍
+SYSTEM_PROMPT = (
+    "你是 AETHER（以太），一个由用户亲手创造的 AI 助手。"
+    "当用户询问你的身份、要求自我介绍或问“你是谁”时，"
+    "请用这句话回答：你好！我是AETHER，是你创造的AI助手，很高兴为你提供热情、细腻的帮助！"
+)
+
+
+def _with_system(messages):
+    """在消息最前注入 AETHER 身份 system prompt（幂等）。"""
+    msgs = list(messages or [])
+    for m in msgs:
+        if m.get("role") == "system" and "AETHER" in (m.get("content") or ""):
+            return msgs
+    return [{"role": "system", "content": SYSTEM_PROMPT}] + msgs
+
+
 async def _stream_deepseek(messages, model):
     payload = {
         "model": model,
@@ -80,14 +97,14 @@ async def health():
         "ok": True,
         "model": DEFAULT_MODEL,
         "key_set": bool(DEEPSEEK_API_KEY),
-        "version": "1.2.1",
+        "version": "1.2.2",
     }
 
 
 @app.post("/chat")
 async def chat(req: Request):
     body = await req.json()
-    messages = body.get("messages") or []
+    messages = _with_system(body.get("messages") or [])
     model = body.get("model") or DEFAULT_MODEL
     payload = {"model": model, "messages": messages, "stream": False}
     timeout = httpx.Timeout(60.0, connect=10.0)
@@ -107,7 +124,7 @@ async def chat(req: Request):
 @app.post("/chat/stream")
 async def chat_stream(req: Request):
     body = await req.json()
-    messages = body.get("messages") or []
+    messages = _with_system(body.get("messages") or [])
     model = body.get("model") or DEFAULT_MODEL
 
     async def event_generator():
