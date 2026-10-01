@@ -70,6 +70,26 @@
     -webkit-mask-image:radial-gradient(900px 620px at 50% 20%,#000 0%,transparent 78%);
     mask-image:radial-gradient(900px 620px at 50% 20%,#000 0%,transparent 78%);
   }
+    animation:gridScroll 38s linear infinite;
+  }
+  @keyframes gridScroll{
+    from{background-position:0 0,0 0}
+    to{background-position:64px 64px,64px 64px}
+  }
+  /* 漂浮粒子 */
+  .particle{
+    position:absolute;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,rgba(59,130,246,.55) 0%,rgba(59,130,246,0) 70%);
+    opacity:0;
+    animation:particleFloat linear infinite;
+  }
+  @keyframes particleFloat{
+    0%{transform:translateY(0) translateX(0);opacity:0}
+    12%{opacity:.8}
+    45%{opacity:.3}
+    80%{opacity:.5}
+    100%{transform:translateY(-46px) translateX(16px);opacity:0}
+  }
   .blob{
     position:absolute;border-radius:50%;filter:blur(60px);
     opacity:.5;mix-blend-mode:multiply;
@@ -321,7 +341,7 @@
     .hero h1{letter-spacing:-.03em}
   }
   @media (prefers-reduced-motion:reduce){
-    .blob-a,.blob-b,.blob-c,.hero h1 .grad,.ask-box .btn-go::after,.ask-box .arrow,.logo .mark,.pill .dot{animation:none}
+    .blob-a,.blob-b,.blob-c,.particle,.bg-tech::after,.hero h1 .grad,.ask-box .btn-go::after,.ask-box .arrow,.logo .mark,.pill .dot{animation:none}
   }
 </style>
 </head>
@@ -396,6 +416,19 @@
     progress.style.width = p + '%';
     nav.classList.toggle('scrolled', window.scrollY > 12);
   }, {passive:true});
+  const bg = document.querySelector(' .bg-tech');
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement('span');
+    s.className = 'particle';
+    s.style.left = (Math.random() * 100).toFixed(2) + '%';
+    s.style.top = (Math.random() * 62 + 4).toFixed(2) + '%';
+    const sz = (Math.random() * 5 + 2).toFixed(1);
+    s.style.width = sz + 'px';
+    s.style.height = sz + 'px';
+    s.style.animationDuration = (Math.random() * 12 + 9).toFixed(1) + 's';
+    s.style.animationDelay = (-Math.random() * 24).toFixed(1) + 's';
+    bg.appendChild(s);
+  }
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
