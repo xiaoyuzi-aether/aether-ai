@@ -330,6 +330,13 @@
   .footer-bottom .slogan{color:var(--muted);letter-spacing:.03em}
   .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1)}
   .reveal.in{opacity:1;transform:none}
+  .reveal-left{opacity:0;transform:translateX(-46px);transition:opacity .8s ease,transform .8s cubic-bezier(.22,1,.36,1)}
+  .reveal-right{opacity:0;transform:translateX(46px);transition:opacity .8s ease,transform .8s cubic-bezier(.22,1,.36,1)}
+  .reveal-left.in,.reveal-right.in{opacity:1;transform:none}
+  .footer-grid .reveal-right:nth-child(2){transition-delay:.1s}
+  .footer-grid .reveal-right:nth-child(3){transition-delay:.2s}
+  .footer-grid .reveal-right:nth-child(4){transition-delay:.3s}
+  .footer-bottom.reveal{transition-delay:.18s}
   @media (max-width:900px){
     .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
     .hero{padding:130px 0 70px}
@@ -376,24 +383,24 @@
 <footer>
   <div class="container">
     <div class="footer-grid">
-      <div class="footer-col reveal">
+      <div class="footer-col reveal-left">
         <div class="f-brand"><span class="mark"></span><b>AETHER</b></div>
         <p>一个好奇心驱动、可审计、可扩展的开源通用智能体生态：把 LLM、工具、记忆、世界模型、好奇心引擎与安全策略组装成可运行的自主系统。</p>
       </div>
-      <div class="footer-col reveal">
+      <div class="footer-col reveal-right">
         <h5>导航</h5>
         <ul>
           <li><a href="https://xiaoyuzi-aether.github.io/aether-ai/">首页</a></li>
         </ul>
       </div>
-      <div class="footer-col reveal">
+      <div class="footer-col reveal-right">
         <h5>项目</h5>
         <ul>
           <li><a href="#">安全与治理</a></li>
           <li><a href="#">FAQ</a></li>
         </ul>
       </div>
-      <div class="footer-col reveal">
+      <div class="footer-col reveal-right">
         <h5>资源</h5>
         <ul>
           <li><a href="#">安全白皮书</a></li>
@@ -437,7 +444,7 @@
       }
     });
   }, {threshold:0.1, rootMargin:'0px 0px -40px 0px'});
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => io.observe(el));
 </script>
 </body>
 </html>
