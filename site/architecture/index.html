@@ -1162,27 +1162,16 @@
 
     <a class="logo" href="#top"><span class="mark"></span>AETHER</a>
 
-    <div class="nav-links">
-
-      <a href="#overview">结论</a>
-
-      <a href="#architecture">架构</a>
-
-      <a href="#kernel">内核</a>
-
-      <a href="#plugins">插件</a>
-
+        <div class="nav-links">
+      <a href="#goals">设计目标</a>
+      <a href="#core">core 层</a>
+      <a href="#adapters">适配器</a>
+      <a href="#boundary">依赖边界</a>
       <a href="#events">事件流</a>
-
-      <a href="#security">安全</a>
-
-      <a href="#quality">测试 CI</a>
-
-      <a href="#roadmap">路线图</a>
-
+      <a href="#pipeline">插件细节</a>
     </div>
 
-    <a class="btn-mini" href="#architecture">架构总览</a>
+    
 
   </div>
 
@@ -1210,7 +1199,7 @@
 
       <a class="btn primary" href="https://xiaoyuzi-aether.github.io/aether-ai/chat/">开始在线对话 →</a>
 
-      <a class="btn ghost" href="#architecture">查看架构全景</a>
+      
 
     </div>
 
@@ -1274,77 +1263,7 @@
 
 <!-- ============ TL;DR ============ -->
 
-<section class="section" id="overview">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">TL;DR</div>
-
-      <h2>五条核心结论</h2>
-
-      <p>一页看懂 AETHER 的架构主张：极简内核、单向依赖、端口可换、事件扩展、密钥收敛。</p>
-
-    </div>
-
-    <div class="cards c3">
-
-      <div class="card reveal">
-
-        <span class="num">01 / KERNEL</span>
-
-        <h3>微内核极简</h3>
-
-        <p>内核只做三件事——生命周期、事件总线、注册表。业务能力全部由插件提供，新增功能不动内核一行代码。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">02 / LAYERING</span>
-
-        <h3>依赖单向分层</h3>
-
-        <p><code>ui → public-api → core → kernel</code>，core 不依赖任何外层实现，依赖规则由 dependency-cruiser 强制。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">03 / PORTS</span>
-
-        <h3>端口可替换</h3>
-
-        <p>存储、模型网关、文件选择全部抽象为接口：ChatRepository / AiGateway / FileStore，适配器实现可随时更换。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">04 / EVENTS</span>
-
-        <h3>扩展靠事件</h3>
-
-        <p>插件经 slot 与事件总线接入，内核零改动。GEO 采集 / 流水线 / 分析全部以插件形式挂载。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">05 / SECURITY</span>
-
-        <h3>密钥不进前端</h3>
-
-        <p>DeepSeek Key 只存后端代理，前端零密钥。安全边界明确，密钥泄漏面收敛到服务端。</p>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ 设计目标与取舍 ============ -->
 
@@ -1446,123 +1365,11 @@
 
 <!-- ============ 全景架构 ============ -->
 
-<section class="section" id="architecture">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">Architecture</div>
-
-      <h2>全景架构：单向依赖 + 插件扩展</h2>
-
-      <p>左侧是 UI 到内核的单向调用链，下方是适配器与插件对内核的注册与实现。</p>
-
-    </div>
-
-    <div class="arch reveal">
-
-      <div class="arch-box dark"><b>UI</b><span>视图与组件</span></div>
-
-      <div class="arch-box dark"><b>public-api</b><span>稳定 API 出口</span></div>
-
-      <div class="arch-box dark"><b>core</b><span>领域 + 用例 + 端口</span></div>
-
-      <div class="arch-box blue"><b>kernel</b><span>生命周期 · 总线 · 注册表</span></div>
-
-      <div class="arch-box light up"><b>adapters</b><span>实现 core/ports</span></div>
-
-      <div class="arch-box light up"><b>plugins</b><span>扩展点注册</span></div>
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ Kernel ============ -->
 
-<section class="section alt" id="kernel">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">Kernel</div>
-
-      <h2>生命周期 + 事件总线 + 注册表</h2>
-
-      <p>内核只提供三个机制，其余能力全部由插件承担。</p>
-
-    </div>
-
-    <div class="flow-wrap reveal" style="margin-bottom:44px">
-
-      <div class="flow">
-
-        <div class="node">created<small>初始态 · use() 装配</small></div>
-
-        <div class="arrow"><i>start</i>→</div>
-
-        <div class="node">starting<small>插件 setup → start</small></div>
-
-        <div class="arrow"><i>就绪</i>→</div>
-
-        <div class="node active">running<small>运行时 · 事件循环</small></div>
-
-        <div class="arrow"><i>stop</i>→</div>
-
-        <div class="node">stopping<small>插件逆序 stop</small></div>
-
-        <div class="arrow"><i>终</i>→</div>
-
-        <div class="node">stopped<small>终态</small></div>
-
-      </div>
-
-    </div>
-
-    <div class="cards c3">
-
-      <div class="card reveal">
-
-        <span class="num">01 · LIFECYCLE</span>
-
-        <h3>生命周期</h3>
-
-        <p>状态机驱动插件钩子：start 正序执行 setup → start，stop 逆序执行；单个插件异常被隔离，不阻断整体。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">02 · EVENT BUS</span>
-
-        <h3>事件总线 EventBus</h3>
-
-        <p><span class="tag">on</span><span class="tag">once</span><span class="tag">off</span><span class="tag">emit</span></p>
-
-        <p>支持通配订阅（<code>plugin:*</code>）；handler 异常由 safeCall 捕获，互不影响。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">03 · REGISTRY</span>
-
-        <h3>注册表 Registry</h3>
-
-        <p><span class="tag">defineSlot</span><span class="tag">register</span><span class="tag">resolve</span><span class="tag">list</span></p>
-
-        <p>slot 带版本与契约，provider 按 id 解析，重复注册报错。</p>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ core 层 ============ -->
 
@@ -1712,121 +1519,7 @@
 
 <!-- ============ plugins ============ -->
 
-<section class="section" id="plugins">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">Plugins</div>
-
-      <h2>三大能力插件，全部经扩展点挂载</h2>
-
-      <p>插件只依赖内核扩展点（slot / 事件），不依赖 UI 与彼此，可独立装卸。</p>
-
-    </div>
-
-    <div class="cards c3">
-
-      <div class="plugin reveal">
-
-        <div class="plugin-head">
-
-          <b>content-fetcher</b>
-
-          <span>数据采集层</span>
-
-        </div>
-
-        <div class="plugin-body">
-
-          <ul>
-
-            <li>fetcher.base.ts</li>
-
-            <li>fetcher.rss.ts</li>
-
-            <li>fetcher.web.ts</li>
-
-            <li>index.ts</li>
-
-          </ul>
-
-        </div>
-
-      </div>
-
-      <div class="plugin reveal">
-
-        <div class="plugin-head">
-
-          <b>content-pipeline</b>
-
-          <span>内容处理层</span>
-
-        </div>
-
-        <div class="plugin-body">
-
-          <ul>
-
-            <li>dedup.simhash.ts</li>
-
-            <li>dedup.semantic.ts</li>
-
-            <li>summarize.ts</li>
-
-            <li>pipeline.ts</li>
-
-          </ul>
-
-        </div>
-
-      </div>
-
-      <div class="plugin reveal">
-
-        <div class="plugin-head">
-
-          <b>geo-analyzer</b>
-
-          <span>GEO 分析层</span>
-
-        </div>
-
-        <div class="plugin-body">
-
-          <ul>
-
-            <li>keyword-extract.ts</li>
-
-            <li>competitor-scan.ts</li>
-
-            <li>brand-probe.ts</li>
-
-            <li>report.ts</li>
-
-          </ul>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <div class="event-contract reveal">
-
-      <span>// 插件与内核只通过事件契约交互</span><br>
-
-      command:content:fetch → content:fetched → content:processed<br>
-
-      command:geo:run → geo:progress → geo:report:ready
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ 依赖边界 ============ -->
 
@@ -2196,259 +1889,15 @@
 
 <!-- ============ 安全与部署 ============ -->
 
-<section class="section" id="security">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">Security &amp; Deploy</div>
-
-      <h2>安全与部署：密钥收敛 + 双平台上线</h2>
-
-      <p>密钥泄漏面收敛到服务端；前端任何位置均不出现 Key，构建物可公开审计。</p>
-
-    </div>
-
-    <div class="cards c3">
-
-      <div class="card reveal">
-
-        <span class="num">01 · 密钥只在后端</span>
-
-        <h3>环境变量托管</h3>
-
-        <p><code>DEEPSEEK_API_KEY</code> 存于 Railway Variables 环境变量，仓库与代码零密钥。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">02 · 前端零密钥</span>
-
-        <h3>构建产物可公开</h3>
-
-        <p><code>.env</code> 仅含 <code>VITE_API_BASE_URL</code>（后端公网地址），构建产物不含任何 Key。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">03 · CORS 白名单</span>
-
-        <h3>来源严格限定</h3>
-
-        <p><code>ALLOWED_ORIGINS</code> 限定 <code>localhost:5173</code> 与 GitHub Pages 域名，其余来源拒绝。</p>
-
-      </div>
-
-    </div>
-
-    <div class="deploy reveal">
-
-      <div class="box">
-
-        <b>GitHub Pages</b>
-
-        <span>前端静态产物</span>
-
-      </div>
-
-      <div class="arrow">→</div>
-
-      <div class="box blue">
-
-        <b>Railway 后端</b>
-
-        <span>FastAPI 代理</span>
-
-      </div>
-
-    </div>
-
-    <div class="cards c2 reveal" style="margin-top:20px">
-
-      <div class="card">
-
-        <span class="num">DEPLOY FLOW</span>
-
-        <h3>部署拓扑</h3>
-
-        <p>main push → GitHub Actions 构建 UI → Pages；Railway 自动部署 <code>server.py</code>，<code>/health</code> 探活。</p>
-
-      </div>
-
-      <div class="card">
-
-        <span class="num">REQUEST PATH</span>
-
-        <h3>请求路径</h3>
-
-        <p>浏览器 → <code>VITE_API_BASE_URL</code>（无密钥）→ <code>/chat</code> 后端 → 附 Authorization 调 DeepSeek → SSE 流回。</p>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ 测试与 CI ============ -->
 
-<section class="section alt" id="quality">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">Testing &amp; CI</div>
-
-      <h2>三层测试 + 五步流水线</h2>
-
-      <p>任一环节失败即阻断合并与发布；部署密钥走 GitHub Secrets。</p>
-
-    </div>
-
-    <div class="cards c3" style="margin-bottom:52px">
-
-      <div class="card reveal">
-
-        <span class="num">01 · 单元测试</span>
-
-        <h3>Unit</h3>
-
-        <p>EventBus 通配订阅、handler 异常隔离；usecase 注入替身验证写、调 AI、存、发事件的完整顺序。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">02 · 契约测试</span>
-
-        <h3>Contract</h3>
-
-        <p>chat-repository contract 定义 <code>list / save</code>（按 id upsert）/ remove 行为，跨所有实现统一执行。</p>
-
-      </div>
-
-      <div class="card reveal">
-
-        <span class="num">03 · 集成校验</span>
-
-        <h3>Integration</h3>
-
-        <p>流式 AI 网关测试 SSE 增量解析、<code>[DONE]</code> 收尾与失败自动重试，覆盖异常路径。</p>
-
-      </div>
-
-    </div>
-
-    <div class="section-head reveal" style="margin-bottom:26px">
-
-      <h3 style="font-size:15px;color:var(--blue);margin:0 0 6px;font-weight:700;letter-spacing:.06em">CI 流水线（GitHub Actions）</h3>
-
-    </div>
-
-    <div class="ci-list reveal">
-
-      <div class="ci-step">lint（含 dependency-cruise）</div>
-
-      <div class="ci-arrow">↓</div>
-
-      <div class="ci-step">typecheck</div>
-
-      <div class="ci-arrow">↓</div>
-
-      <div class="ci-step">test（vitest）</div>
-
-      <div class="ci-arrow">↓</div>
-
-      <div class="ci-step highlight">build → deploy Pages</div>
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ 现状 / 限制 / 下一步 ============ -->
 
-<section class="section" id="roadmap">
 
-  <div class="container">
-
-    <div class="section-head reveal">
-
-      <div class="eyebrow">Status &amp; Roadmap</div>
-
-      <h2>现状、已知限制与下一步</h2>
-
-      <p>诚实地呈现当前能力边界，以及下一阶段的演进方向。</p>
-
-    </div>
-
-    <div class="cards c3">
-
-      <div class="road-col reveal">
-
-        <h4 class="green">当前状态</h4>
-
-        <div class="road-list">
-
-          <div class="road-item"><b>微内核架构落地</b>，版本 v1.2.2，本地与线上均可运行。</div>
-
-          <div class="road-item"><b>GEO 三插件开发完成</b>，经事件契约挂载，内核零改动。</div>
-
-          <div class="road-item"><b>双平台部署</b>：GitHub Pages 前端 + Railway 后端代理。</div>
-
-          <div class="road-item"><b>密钥仅在服务端</b>，前端产物可公开审计。</div>
-
-        </div>
-
-      </div>
-
-      <div class="road-col amber reveal">
-
-        <h4>已知限制</h4>
-
-        <div class="road-list">
-
-          <div class="road-item">聊天依赖有效 DeepSeek Key：欠费或空 Key 时 <code>/chat</code> 返回 402。</div>
-
-          <div class="road-item">语义去重依赖 PostgreSQL + pgvector，需要独立数据库实例。</div>
-
-          <div class="road-item">网页正文抓取依赖后端 Playwright 服务，离线时仅 RSS 可用。</div>
-
-          <div class="road-item">模型网关当前默认 DeepSeek，切换其他模型需更换适配器。</div>
-
-        </div>
-
-      </div>
-
-      <div class="road-col reveal">
-
-        <h4>下一步</h4>
-
-        <div class="road-list">
-
-          <div class="road-item"><b>多模型网关</b>：新增适配器切换不同模型供应商。</div>
-
-          <div class="road-item"><b>GEO 定时巡检</b>：定时任务驱动品牌可见度监控。</div>
-
-          <div class="road-item"><b>内容个性化排序</b>：按用户偏好重排内容流。</div>
-
-          <div class="road-item"><b>多模态输入</b>：语音 / 文件终端口扩展接入。</div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
 
 <!-- ============ Footer ============ -->
 
