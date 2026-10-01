@@ -47,9 +47,15 @@
     padding:2px 7px;
     border-radius:6px;
   }
-  /* ---------- 科技浅色背景：网格 + 蓝色光晕 ---------- */
+  #progress{
+    position:fixed;top:0;left:0;height:2.5px;width:0;z-index:120;
+    background:linear-gradient(90deg,#3b82f6,#1d4ed8);
+    border-radius:0 2px 2px 0;
+    box-shadow:0 0 10px rgba(59,130,246,.6);
+    transition:width .1s linear;
+  }
   .bg-tech{
-    position:fixed;inset:0;z-index:0;pointer-events:none;
+    position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
     background:
       radial-gradient(1200px 720px at 50% -18%, rgba(37,99,235,.10), transparent 70%),
       radial-gradient(900px 560px at 84% 10%, rgba(59,130,246,.06), transparent 72%),
@@ -64,8 +70,38 @@
     -webkit-mask-image:radial-gradient(900px 620px at 50% 20%,#000 0%,transparent 78%);
     mask-image:radial-gradient(900px 620px at 50% 20%,#000 0%,transparent 78%);
   }
+  .blob{
+    position:absolute;border-radius:50%;filter:blur(60px);
+    opacity:.5;mix-blend-mode:multiply;
+  }
+  .blob-a{
+    width:520px;height:520px;top:-140px;left:-120px;
+    background:radial-gradient(circle,rgba(59,130,246,.28),transparent 70%);
+    animation:driftA 18s ease-in-out infinite alternate;
+  }
+  .blob-b{
+    width:460px;height:460px;top:36%;right:-160px;
+    background:radial-gradient(circle,rgba(139,92,246,.16),transparent 70%);
+    animation:driftB 22s ease-in-out infinite alternate;
+  }
+  .blob-c{
+    width:380px;height:380px;bottom:-140px;left:32%;
+    background:radial-gradient(circle,rgba(37,99,235,.14),transparent 70%);
+    animation:driftC 26s ease-in-out infinite alternate;
+  }
+  @keyframes driftA{
+    0%{transform:translate(0,0) scale(1)}
+    100%{transform:translate(120px,90px) scale(1.12)}
+  }
+  @keyframes driftB{
+    0%{transform:translate(0,0) scale(1)}
+    100%{transform:translate(-110px,-70px) scale(1.08)}
+  }
+  @keyframes driftC{
+    0%{transform:translate(0,0) scale(1)}
+    100%{transform:translate(-90px,-60px) scale(1.15)}
+  }
   .container{max-width:var(--max);margin:0 auto;padding:0 24px;position:relative;z-index:1}
-  /* ---------- 导航 ---------- */
   .nav{
     position:fixed;top:0;left:0;right:0;z-index:90;
     backdrop-filter:blur(16px) saturate(180%);
@@ -88,10 +124,15 @@
     background:linear-gradient(135deg,#3b82f6,#1d4ed8);
     box-shadow:0 3px 10px rgba(37,99,235,.35);
     display:inline-block;position:relative;
+    animation:markPulse 3.2s ease-in-out infinite;
   }
   .logo .mark::after{
     content:"";position:absolute;inset:7px;border-radius:3px;
     background:rgba(255,255,255,.85);
+  }
+  @keyframes markPulse{
+    0%,100%{box-shadow:0 3px 10px rgba(37,99,235,.35)}
+    50%{box-shadow:0 3px 18px rgba(37,99,235,.6)}
   }
   .nav-actions{display:flex;align-items:center;gap:10px}
   .nav-link{
@@ -101,13 +142,12 @@
     background:#fff;
     transition:.25s;white-space:nowrap;
   }
-  .nav-link:hover{color:var(--blue-3);border-color:rgba(37,99,235,.4)}
+  .nav-link:hover{color:var(--blue-3);border-color:rgba(37,99,235,.4);transform:translateY(-1px)}
   .nav-link.primary{
     background:var(--blue);color:#fff;border-color:var(--blue);
     box-shadow:0 4px 14px rgba(37,99,235,.3);
   }
   .nav-link.primary:hover{background:var(--blue-2);border-color:var(--blue-2)}
-  /* ---------- Hero ---------- */
   .hero{
     position:relative;
     min-height:100vh;
@@ -125,6 +165,7 @@
     border:1px solid rgba(37,99,235,.25);
     box-shadow:0 2px 10px rgba(37,99,235,.08);
     margin-bottom:34px;
+    animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .08s both;
   }
   .pill .dot{
     width:7px;height:7px;border-radius:50%;background:var(--green);
@@ -139,17 +180,28 @@
     font-size:clamp(40px,7vw,72px);
     line-height:1.12;letter-spacing:-.035em;
     font-weight:800;margin:0 0 30px;color:var(--text);
+    animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .2s both;
   }
   .hero h1 .grad{
     background:linear-gradient(110deg,#60a5fa 0%,#2563eb 45%,#1d4ed8 100%);
+    background-size:220% 220%;
     -webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;
+    animation:gradFlow 8s ease-in-out infinite;
+  }
+  @keyframes gradFlow{
+    0%,100%{background-position:0% 50%}
+    50%{background-position:100% 50%}
   }
   .hero .lead{
     color:var(--muted);font-size:17px;line-height:1.9;
     margin:0 0 52px;
+    animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .32s both;
   }
-  /* ---------- 输入区 ---------- */
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(26px)}
+    to{opacity:1;transform:none}
+  }
   .ask-box{
     display:flex;align-items:center;gap:10px;
     max-width:640px;margin:0 auto;
@@ -159,31 +211,52 @@
     border:1px solid var(--border-strong);
     box-shadow:0 18px 48px -22px rgba(37,99,235,.22);
     transition:border-color .25s,box-shadow .25s;
+    animation:fadeUp .7s cubic-bezier(.22,1,.36,1) .44s both;
   }
-  .ask-box:focus-within{border-color:rgba(37,99,235,.55);box-shadow:0 18px 48px -18px rgba(37,99,235,.3)}
+  .ask-box:hover{box-shadow:0 18px 52px -20px rgba(37,99,235,.3)}
+  .ask-box:focus-within{
+    border-color:rgba(37,99,235,.55);
+    box-shadow:0 18px 48px -18px rgba(37,99,235,.3);
+  }
   .ask-box input{
     flex:1;min-width:0;
     background:transparent;border:none;outline:none;
     color:var(--text);font-size:15px;font-family:inherit;
   }
-  .ask-box input::placeholder{color:var(--muted-2)}
+  .ask-box input::placeholder{color:var(--muted-2);transition:color .3s}
+  .ask-box:focus-within input::placeholder{color:rgba(37,99,235,.5)}
   .ask-box .btn-go{
     display:inline-flex;align-items:center;gap:8px;
     padding:11px 22px;border-radius:12px;
     background:var(--blue);color:#fff;
     font-size:14.5px;font-weight:650;border:none;cursor:pointer;
-    transition:.25s;white-space:nowrap;
+    transition:.25s;white-space:nowrap;position:relative;overflow:hidden;
     box-shadow:0 6px 18px rgba(37,99,235,.35);
   }
-  .ask-box .btn-go:hover{background:var(--blue-2);transform:translateY(-1px)}
+  .ask-box .btn-go:hover{background:var(--blue-2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(37,99,235,.42)}
+  .ask-box .btn-go::after{
+    content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.35),transparent);
+    transform:skewX(-20deg);
+    animation:sweep 3.2s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%{left:-80%}
+    55%{left:130%}
+    100%{left:130%}
+  }
   .ask-box .arrow{
     width:34px;height:34px;border-radius:10px;flex:0 0 auto;
     background:rgba(37,99,235,.1);
     border:1px solid rgba(37,99,235,.3);
     color:var(--blue-3);font-style:normal;font-weight:700;font-size:16px;
     display:inline-flex;align-items:center;justify-content:center;
+    animation:arrowFloat 2.2s ease-in-out infinite;
   }
-  /* ---------- Footer ---------- */
+  @keyframes arrowFloat{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-4px)}
+  }
   footer{
     position:relative;z-index:1;
     border-top:1px solid var(--border);
@@ -216,9 +289,15 @@
   }
   .footer-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
   .footer-col li a{
-    color:var(--muted);font-size:13px;transition:.2s;
+    color:var(--muted);font-size:13px;transition:.2s;position:relative;
+    display:inline-block;
+  }
+  .footer-col li a::after{
+    content:"";position:absolute;left:0;bottom:-2px;height:1.5px;width:0;
+    background:var(--blue);transition:width .25s;
   }
   .footer-col li a:hover{color:var(--blue-3)}
+  .footer-col li a:hover::after{width:100%}
   .footer-bottom{
     display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
     padding-top:24px;border-top:1px solid var(--border);
@@ -229,7 +308,8 @@
     color:var(--blue-3);font-size:11.5px;
   }
   .footer-bottom .slogan{color:var(--muted);letter-spacing:.03em}
-  /* ---------- 响应式 ---------- */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1)}
+  .reveal.in{opacity:1;transform:none}
   @media (max-width:900px){
     .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
     .hero{padding:130px 0 70px}
@@ -240,10 +320,18 @@
     .ask-box input{width:100%}
     .hero h1{letter-spacing:-.03em}
   }
+  @media (prefers-reduced-motion:reduce){
+    .blob-a,.blob-b,.blob-c,.hero h1 .grad,.ask-box .btn-go::after,.ask-box .arrow,.logo .mark,.pill .dot{animation:none}
+  }
 </style>
 </head>
 <body>
-<div class="bg-tech"></div>
+<div id="progress"></div>
+<div class="bg-tech">
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="blob blob-c"></div>
+</div>
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a class="logo" href="#top"><span class="mark"></span>AETHER</a>
@@ -268,24 +356,24 @@
 <footer>
   <div class="container">
     <div class="footer-grid">
-      <div class="footer-col">
+      <div class="footer-col reveal">
         <div class="f-brand"><span class="mark"></span><b>AETHER</b></div>
         <p>一个好奇心驱动、可审计、可扩展的开源通用智能体生态：把 LLM、工具、记忆、世界模型、好奇心引擎与安全策略组装成可运行的自主系统。</p>
       </div>
-      <div class="footer-col">
+      <div class="footer-col reveal">
         <h5>导航</h5>
         <ul>
           <li><a href="https://xiaoyuzi-aether.github.io/aether-ai/">首页</a></li>
         </ul>
       </div>
-      <div class="footer-col">
+      <div class="footer-col reveal">
         <h5>项目</h5>
         <ul>
           <li><a href="#">安全与治理</a></li>
           <li><a href="#">FAQ</a></li>
         </ul>
       </div>
-      <div class="footer-col">
+      <div class="footer-col reveal">
         <h5>资源</h5>
         <ul>
           <li><a href="#">安全白皮书</a></li>
@@ -293,17 +381,30 @@
         </ul>
       </div>
     </div>
-    <div class="footer-bottom">
+    <div class="footer-bottom reveal">
       <div><code>Apache-2.0</code> · EtherAI Contributors</div>
       <div class="slogan">好奇心驱动 · 规则为界 · 全链路可审计</div>
     </div>
   </div>
 </footer>
 <script>
+  const progress = document.getElementById('progress');
   const nav = document.getElementById('nav');
   window.addEventListener('scroll', () => {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const p = h > 0 ? (window.scrollY / h) * 100 : 0;
+    progress.style.width = p + '%';
     nav.classList.toggle('scrolled', window.scrollY > 12);
   }, {passive:true});
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.1, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 </script>
 </body>
 </html>
