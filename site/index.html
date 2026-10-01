@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AETHER · 微内核架构 | 可插拔 AI 聊天应用</title>
+<meta name="description" content="AETHER 微内核架构：可插拔 AI 聊天应用、六边形端口、插件化扩展。内核只做生命周期 / 事件总线 / 注册表三件事。">
+<style>
+  :root{
+    --bg:#070b16;
+    --bg-soft:#0b1222;
+    --surface:rgba(255,255,255,.035);
+    --surface-2:rgba(255,255,255,.06);
+    --border:rgba(255,255,255,.09);
+    --border-strong:rgba(255,255,255,.16);
+    --text:#e6ecf7;
+    --muted:#8b9ab3;
+    --muted-2:#64748b;
+    --blue:#2563eb;
+    --blue-2:#3b82f6;
+    --blue-3:#93c5fd;
+    --radius:16px;
+    --max:1140px;
+    --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%}
+  /* ---------- 顶部进度条 ---------- */
+  #progress{
+    position:fixed;top:0;left:0;height:2px;width:0;
+    background:linear-gradient(90deg,var(--blue),#60a5fa);
+    z-index:100;transition:width .1s linear;
+  }
+  /* ---------- 导航 ---------- */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:90;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    background:rgba(7,11,22,.72);
+    border-bottom:1px solid transparent;
+    transition:border-color .3s,background .3s;
+  }
+  .nav.scrolled{border-bottom-color:var(--border);background:rgba(7,11,22,.9)}
+  .nav-inner{
+    max-width:var(--max);margin:0 auto;padding:14px 24px;
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+  }
+  .logo{
+    display:flex;align-items:center;gap:9px;
+    font-weight:700;letter-spacing:.14em;font-size:14px;
+  }
+  .logo .mark{
+    width:20px;height:20px;border-radius:6px;
+    background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+    box-shadow:0 0 18px rgba(59,130,246,.6);
+    display:inline-block;
+  }
+  .nav-links{display:flex;align-items:center;gap:26px;font-size:14px;color:var(--muted)}
+  .nav-links a{position:relative;transition:color .2s}
+  .nav-links a:hover,.nav-links a.active{color:var(--text)}
+  .nav-links a.active::after{
+    content:"";position:absolute;left:0;right:0;bottom:-7px;height:1.5px;
+    background:var(--blue-2);border-radius:2px;
+  }
+  .nav .btn-mini{
+    font-size:13px;padding:7px 15px;border-radius:99px;
+    border:1px solid var(--border-strong);color:var(--text);
+    transition:.25s;white-space:nowrap;
+  }
+  .nav .btn-mini:hover{background:var(--blue);border-color:var(--blue);box-shadow:0 0 24px rgba(37,99,235,.45)}
+  /* ---------- 通用布局 ---------- */
+  .container{max-width:var(--max);margin:0 auto;padding:0 24px}
+  section{scroll-margin-top:86px}
+  .section{padding:96px 0;position:relative}
+  .section.alt{background:linear-gradient(180deg,rgba(255,255,255,.022),transparent 60%)}
+  .section-head{max-width:760px;margin-bottom:52px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--blue-3);margin-bottom:14px;
+  }
+  .eyebrow::before{
+    content:"";width:22px;height:1px;background:var(--blue-2);display:inline-block;
+  }
+  h2{
+    font-size:clamp(26px,3.6vw,38px);
+    line-height:1.25;letter-spacing:-.02em;
+    margin:0 0 14px;font-weight:750;
+  }
+  .section-head p{color:var(--muted);margin:0;font-size:15.5px}
+  /* ---------- 卡片 ---------- */
+  .cards{display:grid;gap:18px}
+  .cards.c2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  .cards.c3{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+  .cards.c4{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .card{
+    position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.012));
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:26px 24px;
+    transition:border-color .3s,transform .3s,box-shadow .3s;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;inset:0;border-radius:var(--radius);
+    background:radial-gradient(420px 160px at 20% 0%,rgba(59,130,246,.14),transparent 70%);
+    opacity:0;transition:opacity .35s;pointer-events:none;
+  }
+  .card:hover{border-color:rgba(59,130,246,.5);transform:translateY(-4px);box-shadow:0 18px 44px -22px rgba(37,99,235,.7)}
+  .card:hover::before{opacity:1}
+  .card h3{margin:0 0 10px;font-size:17px;font-weight:650;letter-spacing:-.01em}
+  .card p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.75}
+  .card .num{
+    font-family:var(--font-mono);font-size:12px;font-weight:600;
+    color:var(--blue-3);letter-spacing:.1em;margin-bottom:14px;display:block;
+  }
+  .card .big-num{
+    font-size:34px;font-weight:800;line-height:1;
+    background:linear-gradient(135deg,#60a5fa,#1d4ed8);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+    display:block;margin-bottom:12px;letter-spacing:-.02em;
+  }
+  .tag{
+    display:inline-block;font-family:var(--font-mono);font-size:11.5px;
+    padding:3px 9px;border-radius:6px;margin:0 6px 6px 0;
+    background:rgba(59,130,246,.12);
+    border:1px solid rgba(59,130,246,.28);
+    color:var(--blue-3);letter-spacing:.02em;
+  }
+  .tag.gray{
+    background:rgba(255,255,255,.05);
+    border-color:var(--border);
+    color:var(--muted);
+  }
+  /* ---------- Hero ---------- */
+  .hero{position:relative;padding:170px 0 110px;overflow:hidden}
+  .hero .glow{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(900px 520px at 50% -12%,rgba(37,99,235,.34),transparent 70%),
+      radial-gradient(620px 420px at 88% 18%,rgba(59,130,246,.16),transparent 72%),
+      radial-gradient(520px 380px at 6% 42%,rgba(29,78,216,.14),transparent 72%);
+  }
+  .hero .grid{
+    position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+    background-size:58px 58px;
+    -webkit-mask-image:radial-gradient(circle at 50% 26%,#000 0%,transparent 76%);
+    mask-image:radial-gradient(circle at 50% 26%,#000 0%,transparent 76%);
+  }
+  .hero-inner{position:relative;z-index:2}
+  .pill{
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:13px;color:var(--blue-3);
+    padding:6px 15px;border-radius:99px;
+    background:rgba(59,130,246,.09);
+    border:1px solid rgba(59,130,246,.3);
+    margin-bottom:26px;
+  }
+  .pill .dot{
+    width:7px;height:7px;border-radius:50%;background:#22c55e;
+    box-shadow:0 0 0 4px rgba(34,197,94,.16);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 4px rgba(34,197,94,.16)}
+    50%{box-shadow:0 0 0 8px rgba(34,197,94,.05)}
+  }
+  .hero h1{
+    font-size:clamp(38px,7vw,74px);
+    line-height:1.06;letter-spacing:-.035em;
+    font-weight:800;margin:0 0 24px;
+  }
+  .hero h1 .grad{
+    background:linear-gradient(110deg,#93c5fd 0%,#3b82f6 45%,#1d4ed8 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .hero .lead{
+    max-width:660px;color:var(--muted);font-size:17px;line-height:1.85;margin:0 0 36px;
+  }
+  .cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:60px}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    padding:13px 26px;border-radius:99px;font-size:15px;font-weight:600;
+    transition:.28s;border:1px solid transparent;cursor:pointer;
+  }
+  .btn.primary{
+    background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+    color:#fff;box-shadow:0 14px 34px -14px rgba(37,99,235,.95);
+  }
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 20px 44px -14px rgba(37,99,235,1)}
+  .btn.ghost{border-color:var(--border-strong);color:var(--text)}
+  .btn.ghost:hover{background:var(--surface-2);border-color:rgba(59,130,246,.55)}
+  .hero-stats{
+    display:flex;flex-wrap:wrap;gap:0;
+    border-top:1px solid var(--border);padding-top:30px;
+  }
+  .stat{
+    flex:1 1 140px;padding-right:26px;margin-right:26px;
+    border-right:1px solid var(--border);
+  }
+  .stat:last-child{border-right:none;margin-right:0;padding-right:0}
+  .stat b{
+    display:block;font-size:30px;font-weight:800;line-height:1.15;
+    letter-spacing:-.02em;
+    background:linear-gradient(135deg,#e6ecf7,#93c5fd);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .stat span{font-size:13px;color:var(--muted-2)}
+  /* ---------- 架构图 ---------- */
+  .arch{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:34px 34px;
+    margin-top:12px;
+  }
+  .arch-box{
+    position:relative;border-radius:14px;padding:22px 16px;text-align:center;
+    border:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+  }
+  .arch-box b{display:block;font-size:16px;font-weight:700;letter-spacing:.01em;margin-bottom:5px}
+  .arch-box span{font-size:12.5px;color:var(--muted);line-height:1.5;display:block}
+  .arch-box.dark{background:linear-gradient(180deg,#111a2e,#0c1322);border-color:rgba(255,255,255,.12)}
+  .arch-box.blue{
+    background:linear-gradient(180deg,#2563eb,#1d4ed8);
+    border-color:rgba(147,197,253,.5);
+    box-shadow:0 18px 44px -22px rgba(37,99,235,.95);
+  }
+  .arch-box.blue span{color:rgba(255,255,255,.82)}
+  .arch-box.light{
+    background:linear-gradient(180deg,rgba(59,130,246,.16),rgba(59,130,246,.05));
+    border-color:rgba(59,130,246,.34);
+  }
+  .arch-box.light b{color:var(--blue-3)}
+  /* 顶层箭头 */
+  .arch-box.dark:not(:nth-child(4))::after{
+    content:"→";position:absolute;right:-25px;top:50%;transform:translateY(-50%);
+    color:#3f5273;font-size:16px;
+  }
+  /* 底层上指箭头 */
+  .arch-box.up::before{
+    content:"↑";position:absolute;top:-27px;left:50%;transform:translateX(-50%);
+    color:var(--blue-2);font-size:17px;opacity:.95;
+  }
+  .arch > :nth-child(5){grid-column:3}
+  .arch > :nth-child(6){grid-column:4}
+  /* ---------- 状态机 / 流程图 ---------- */
+  .flow-wrap{overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+  .flow{
+    display:flex;align-items:center;gap:10px;
+    min-width:max-content;padding:4px 2px;
+  }
+  .flow-wrap::-webkit-scrollbar{height:6px}
+  .flow-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
+  .node{
+    padding:14px 22px;border-radius:12px;text-align:center;
+    border:1px solid var(--border);
+    background:linear-gradient(180deg,#111a2e,#0c1322);
+    font-family:var(--font-mono);font-size:14px;font-weight:600;
+    white-space:nowrap;
+  }
+  .node small{
+    display:block;font-family:inherit;font-size:11px;font-weight:400;
+    color:var(--muted-2);margin-top:3px;letter-spacing:.02em;
+  }
+  .node.active{
+    background:linear-gradient(180deg,#2563eb,#1d4ed8);
+    border-color:rgba(147,197,253,.55);
+    box-shadow:0 14px 34px -18px rgba(37,99,235,1);
+  }
+  .node.active small{color:rgba(255,255,255,.75)}
+  .node.soft{
+    background:linear-gradient(180deg,rgba(59,130,246,.16),rgba(59,130,246,.05));
+    border-color:rgba(59,130,246,.34);color:var(--blue-3);
+  }
+  .arrow{color:#3f5273;font-size:16px;flex:0 0 auto}
+  .arrow i{
+    display:block;font-style:normal;font-size:10px;color:var(--muted-2);
+    text-align:center;margin-bottom:-2px;
+  }
+  /* ---------- 端口 / 适配器 ---------- */
+  .mapping{display:flex;flex-direction:column;gap:14px}
+  .map-row{
+    display:grid;grid-template-columns:1fr 46px 1fr;align-items:center;gap:0;
+  }
+  .map-row .port{
+    padding:18px 22px;border-radius:12px;text-align:center;
+    font-family:var(--font-mono);font-size:14.5px;font-weight:600;
+    background:linear-gradient(180deg,#111a2e,#0c1322);
+    border:1px solid var(--border);
+  }
+  .map-row .link{text-align:center;color:var(--blue-2);font-size:16px}
+  .map-row .impl{
+    padding:18px 22px;border-radius:12px;text-align:center;
+    font-family:var(--font-mono);font-size:14.5px;font-weight:600;
+    background:linear-gradient(180deg,rgba(59,130,246,.16),rgba(59,130,246,.05));
+    border:1px solid rgba(59,130,246,.34);color:var(--blue-3);
+  }
+  .map-desc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:26px}
+  .map-desc div{
+    font-size:13.5px;color:var(--muted);
+    padding:14px 16px;border-radius:10px;
+    background:var(--surface);border:1px solid var(--border);
+  }
+  /* ---------- 插件 ---------- */
+  .plugin{
+    border:1px solid var(--border);border-radius:var(--radius);
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+    overflow:hidden;transition:.3s;
+  }
+  .plugin:hover{border-color:rgba(59,130,246,.45);transform:translateY(-4px)}
+  .plugin-head{padding:20px 22px 16px;border-bottom:1px solid var(--border)}
+  .plugin-head b{
+    display:block;font-family:var(--font-mono);font-size:15px;
+    color:var(--blue-3);margin-bottom:5px;letter-spacing:.01em;
+  }
+  .plugin-head span{font-size:12.5px;color:var(--muted-2)}
+  .plugin-body{padding:16px 22px 22px}
+  .plugin-body li{
+    list-style:none;font-family:var(--font-mono);font-size:12.5px;
+    color:var(--muted);padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.055);
+  }
+  .plugin-body ul{margin:0;padding:0}
+  .plugin-body li:last-child{border-bottom:none}
+  .event-contract{
+    margin-top:26px;padding:22px 24px;border-radius:14px;
+    background:rgba(59,130,246,.06);
+    border:1px solid rgba(59,130,246,.24);
+    font-family:var(--font-mono);font-size:13px;color:var(--blue-3);
+    line-height:2;overflow-x:auto;white-space:nowrap;
+  }
+  .event-contract span{color:var(--muted-2)}
+  /* ---------- 依赖边界 ---------- */
+  .dep-chain{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    justify-content:center;margin-bottom:40px;
+  }
+  .dep-chain .chip{
+    padding:14px 26px;border-radius:11px;font-family:var(--font-mono);
+    font-size:14px;font-weight:600;border:1px solid var(--border);
+    background:linear-gradient(180deg,#111a2e,#0c1322);
+  }
+  .dep-chain .chip.blue{
+    background:linear-gradient(180deg,#2563eb,#1d4ed8);
+    border-color:rgba(147,197,253,.5);
+  }
+  /* ---------- 安全 / 部署 ---------- */
+  .deploy{
+    display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+    margin-top:34px;padding:28px;border-radius:16px;
+    background:var(--surface);border:1px solid var(--border);
+  }
+  .deploy .box{
+    flex:1 1 200px;padding:20px;border-radius:12px;text-align:center;
+    border:1px solid var(--border);
+    background:linear-gradient(180deg,#111a2e,#0c1322);
+  }
+  .deploy .box b{display:block;font-size:15px;margin-bottom:4px}
+  .deploy .box span{font-size:12.5px;color:var(--muted)}
+  .deploy .box.blue{
+    background:linear-gradient(180deg,#2563eb,#1d4ed8);
+    border-color:rgba(147,197,253,.5);
+  }
+  .deploy .box.blue span{color:rgba(255,255,255,.8)}
+  .deploy .arrow{color:var(--blue-2);font-size:22px}
+  /* ---------- CI ---------- */
+  .ci-list{display:flex;flex-direction:column;gap:0;max-width:640px}
+  .ci-step{
+    position:relative;padding:18px 24px;border-radius:12px;
+    border:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+    font-family:var(--font-mono);font-size:14px;text-align:center;
+  }
+  .ci-step.highlight{
+    background:linear-gradient(180deg,#2563eb,#1d4ed8);
+    border-color:rgba(147,197,253,.5);
+    box-shadow:0 16px 38px -20px rgba(37,99,235,1);
+  }
+  .ci-arrow{text-align:center;color:#3f5273;font-size:14px;line-height:1;padding:9px 0}
+  /* ---------- Roadmap ---------- */
+  .road-col h4{
+    margin:0 0 16px;font-size:14px;font-weight:700;letter-spacing:.06em;
+    display:flex;align-items:center;gap:9px;
+  }
+  .road-col h4::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--blue-2)}
+  .road-col.green h4::before{background:#22c55e}
+  .road-col.amber h4::before{background:#f59e0b}
+  .road-list{display:flex;flex-direction:column;gap:10px}
+  .road-item{
+    padding:14px 18px;border-radius:11px;font-size:14px;color:var(--muted);
+    background:var(--surface);border:1px solid var(--border);
+    transition:.25s;
+  }
+  .road-item:hover{border-color:rgba(59,130,246,.4);color:var(--text);transform:translateX(3px)}
+  .road-item b{color:var(--text);font-weight:600}
+  /* ---------- Footer ---------- */
+  footer{
+    border-top:1px solid var(--border);
+    padding:52px 0 40px;margin-top:20px;
+    background:linear-gradient(180deg,transparent,rgba(37,99,235,.05));
+  }
+  .footer-inner{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    gap:28px;flex-wrap:wrap;
+  }
+  .footer-brand .logo{margin-bottom:12px}
+  .footer-brand p{margin:0;color:var(--muted-2);font-size:13.5px;max-width:420px}
+  .footer-meta{color:var(--muted-2);font-size:13px;text-align:right;line-height:2}
+  .footer-meta code{
+    font-family:var(--font-mono);font-size:12px;
+    background:rgba(255,255,255,.05);padding:2px 7px;border-radius:5px;color:var(--blue-3);
+  }
+  .copyright{
+    margin-top:36px;padding-top:22px;border-top:1px solid var(--border);
+    color:var(--muted-2);font-size:12.5px;text-align:center;
+  }
+  /* ---------- 滚动入场 ---------- */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1)}
+  .reveal.in{opacity:1;transform:none}
+  .cards > .reveal:nth-child(2){transition-delay:.07s}
+  .cards > .reveal:nth-child(3){transition-delay:.14s}
+  .cards > .reveal:nth-child(4){transition-delay:.21s}
+  .cards > .reveal:nth-child(5){transition-delay:.28s}
+  .cards > .reveal:nth-child(6){transition-delay:.35s}
+  /* ---------- 响应式 ---------- */
+  @media (max-width:900px){
+    .nav-links{display:none}
+    .section{padding:74px 0}
+    .hero{padding:130px 0 80px}
+    .arch{grid-template-columns:1fr 1fr;gap:16px}
+    .arch-box.dark:not(:nth-child(4))::after{display:none}
+    .arch-box.up::before{display:none}
+    .arch > :nth-child(5){grid-column:auto}
+    .arch > :nth-child(6){grid-column:auto}
+    .stat{border-right:none;padding-right:0;margin-right:0;flex:1 1 45%}
+    .hero-stats{gap:22px}
+    .map-row{grid-template-columns:1fr;gap:10px}
+    .map-row .link{transform:rotate(90deg)}
+    .footer-meta{text-align:left}
+  }
+  @media (max-width:520px){
+    .arch{grid-template-columns:1fr}
+    .hero h1{letter-spacing:-.03em}
+    .cta .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<!-- ============ 导航 ============ -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top"><span class="mark"></span>AETHER</a>
+    <div class="nav-links">
+      <a href="#overview">结论</a>
+      <a href="#architecture">架构</a>
+      <a href="#kernel">内核</a>
+      <a href="#plugins">插件</a>
+      <a href="#events">事件流</a>
+      <a href="#security">安全</a>
+      <a href="#quality">测试 CI</a>
+      <a href="#roadmap">路线图</a>
+    </div>
+    <a class="btn-mini" href="#architecture">微内核 v1.2.2</a>
+  </div>
+</nav>
+<!-- ============ Hero ============ -->
+<header class="hero" id="top">
+  <div class="glow"></div>
+  <div class="grid"></div>
+  <div class="container hero-inner">
+    <div class="pill"><span class="dot"></span>v1.2.2 · 微内核架构已落地</div>
+    <h1>AETHER<br><span class="grad">微内核架构</span></h1>
+    <p class="lead">
+      可插拔 AI 聊天应用 · 六边形端口 · 插件化扩展。内核只做三件事——
+      生命周期、事件总线、注册表；业务能力全部由插件提供，新增功能不动内核一行代码。
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="#architecture">查看架构全景 →</a>
+      <a class="btn ghost" href="#plugins">浏览插件能力</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>3</b><span>内核机制</span></div>
+      <div class="stat"><b>3</b><span>可替换端口</span></div>
+      <div class="stat"><b>3</b><span>插件能力</span></div>
+      <div class="stat"><b>0</b><span>前端密钥</span></div>
+    </div>
+  </div>
+</header>
+<!-- ============ TL;DR ============ -->
+<section class="section" id="overview">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">TL;DR</div>
+      <h2>五条核心结论</h2>
+      <p>一页看懂 AETHER 的架构主张：极简内核、单向依赖、端口可换、事件扩展、密钥收敛。</p>
+    </div>
+    <div class="cards c3">
+      <div class="card reveal">
+        <span class="num">01 / KERNEL</span>
+        <h3>微内核极简</h3>
+        <p>内核只做三件事——生命周期、事件总线、注册表。业务能力全部由插件提供，新增功能不动内核一行代码。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02 / LAYERING</span>
+        <h3>依赖单向分层</h3>
+        <p><code>ui → public-api → core → kernel</code>，core 不依赖任何外层实现，依赖规则由 dependency-cruiser 强制。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03 / PORTS</span>
+        <h3>端口可替换</h3>
+        <p>存储、模型网关、文件选择全部抽象为接口：ChatRepository / AiGateway / FileStore，适配器实现可随时更换。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">04 / EVENTS</span>
+        <h3>扩展靠事件</h3>
+        <p>插件经 slot 与事件总线接入，内核零改动。GEO 采集 / 流水线 / 分析全部以插件形式挂载。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">05 / SECURITY</span>
+        <h3>密钥不进前端</h3>
+        <p>DeepSeek Key 只存后端代理，前端零密钥。安全边界明确，密钥泄漏面收敛到服务端。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ 设计目标与取舍 ============ -->
+<section class="section alt" id="goals">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Design Goals</div>
+      <h2>设计目标与取舍</h2>
+      <p>四个明确目标，三个清醒取舍——用一点装配复杂度，换解耦与扩展自由。</p>
+    </div>
+    <div class="cards c4" style="margin-bottom:44px">
+      <div class="card reveal">
+        <span class="num">01 · 可扩展</span>
+        <h3>插件挂载新能力</h3>
+        <p>新能力以插件挂载，内核与既有插件零改动；GEO 三插件即为例证。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02 · 可测试</span>
+        <h3>core 零外部依赖</h3>
+        <p>单元 / 契约 / 集成三层测试，CI 强制，核心逻辑可用替身完整验证。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03 · 可替换</span>
+        <h3>适配器即插即用</h3>
+        <p>存储、模型网关、文件选择均抽象为端口，换实现不动 core。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">04 · 安全</span>
+        <h3>零泄漏面</h3>
+        <p>密钥只存在于后端代理，前端代码零密钥、零泄漏面。</p>
+      </div>
+    </div>
+    <div class="cards c3">
+      <div class="card reveal" style="border-style:dashed">
+        <span class="num">取舍 01</span>
+        <h3>启动复杂度</h3>
+        <p>内核加插件装配比单体多一步，换取解耦与扩展自由。</p>
+      </div>
+      <div class="card reveal" style="border-style:dashed">
+        <span class="num">取舍 02</span>
+        <h3>流程隐式化</h3>
+        <p>事件总线解耦调用方，事件契约需文档化，避免隐式依赖失控。</p>
+      </div>
+      <div class="card reveal" style="border-style:dashed">
+        <span class="num">取舍 03</span>
+        <h3>间接层</h3>
+        <p>端口抽象引入少量间接，换来实现可替换与测试替身注入。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ 全景架构 ============ -->
+<section class="section" id="architecture">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Architecture</div>
+      <h2>全景架构：单向依赖 + 插件扩展</h2>
+      <p>左侧是 UI 到内核的单向调用链，下方是适配器与插件对内核的注册与实现。</p>
+    </div>
+    <div class="arch reveal">
+      <div class="arch-box dark"><b>UI</b><span>视图与组件</span></div>
+      <div class="arch-box dark"><b>public-api</b><span>稳定 API 出口</span></div>
+      <div class="arch-box dark"><b>core</b><span>领域 + 用例 + 端口</span></div>
+      <div class="arch-box blue"><b>kernel</b><span>生命周期 · 总线 · 注册表</span></div>
+      <div class="arch-box light up"><b>adapters</b><span>实现 core/ports</span></div>
+      <div class="arch-box light up"><b>plugins</b><span>扩展点注册</span></div>
+    </div>
+  </div>
+</section>
+<!-- ============ Kernel ============ -->
+<section class="section alt" id="kernel">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Kernel</div>
+      <h2>生命周期 + 事件总线 + 注册表</h2>
+      <p>内核只提供三个机制，其余能力全部由插件承担。</p>
+    </div>
+    <div class="flow-wrap reveal" style="margin-bottom:44px">
+      <div class="flow">
+        <div class="node">created<small>初始态 · use() 装配</small></div>
+        <div class="arrow"><i>start</i>→</div>
+        <div class="node">starting<small>插件 setup → start</small></div>
+        <div class="arrow"><i>就绪</i>→</div>
+        <div class="node active">running<small>运行时 · 事件循环</small></div>
+        <div class="arrow"><i>stop</i>→</div>
+        <div class="node">stopping<small>插件逆序 stop</small></div>
+        <div class="arrow"><i>终</i>→</div>
+        <div class="node">stopped<small>终态</small></div>
+      </div>
+    </div>
+    <div class="cards c3">
+      <div class="card reveal">
+        <span class="num">01 · LIFECYCLE</span>
+        <h3>生命周期</h3>
+        <p>状态机驱动插件钩子：start 正序执行 setup → start，stop 逆序执行；单个插件异常被隔离，不阻断整体。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02 · EVENT BUS</span>
+        <h3>事件总线 EventBus</h3>
+        <p><span class="tag">on</span><span class="tag">once</span><span class="tag">off</span><span class="tag">emit</span></p>
+        <p>支持通配订阅（<code>plugin:*</code>）；handler 异常由 safeCall 捕获，互不影响。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03 · REGISTRY</span>
+        <h3>注册表 Registry</h3>
+        <p><span class="tag">defineSlot</span><span class="tag">register</span><span class="tag">resolve</span><span class="tag">list</span></p>
+        <p>slot 带版本与契约，provider 按 id 解析，重复注册报错。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ core 层 ============ -->
+<section class="section" id="core">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Core Layer</div>
+      <h2>领域 + 用例 + 端口，零外部依赖</h2>
+      <p>用例层编排流程，领域层承载纯业务规则，端口层定义对外契约——三者都不依赖框架与外部 IO。</p>
+    </div>
+    <div class="arch reveal" style="grid-template-columns:1fr;gap:26px;max-width:820px;margin:0 auto 40px">
+      <div class="arch-box dark" style="padding:26px">
+        <b>usecases · 用例层</b>
+        <span>应用服务：send-message / list-chats</span>
+      </div>
+      <div class="arch" style="grid-template-columns:1fr 1fr;gap:24px">
+        <div class="arch-box light" style="padding:26px">
+          <b>domain · 领域层</b>
+          <span>实体与纯业务规则</span>
+        </div>
+        <div class="arch-box light" style="padding:26px">
+          <b>ports · 端口层</b>
+          <span>ChatRepository / AiGateway / FileStore</span>
+        </div>
+      </div>
+    </div>
+    <div class="cards c2">
+      <div class="card reveal">
+        <span class="num">DOMAIN</span>
+        <h3>domain · 领域层</h3>
+        <p>Conversation / Message 实体与值对象；ID 生成、消息校验等纯业务规则，不依赖任何框架或外部 IO。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">USECASES</span>
+        <h3>usecases · 用例层</h3>
+        <p>
+          send-message 编排完整流程：保存用户消息 → 调用 AiGateway → 追加回复 →
+          写回存储 → 发出事件，全程只依赖端口。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ adapters ============ -->
+<section class="section alt" id="adapters">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Adapters</div>
+      <h2>三个端口，三个可替换实现</h2>
+      <p>端口 = 契约，适配器 = 实现。换实现不动 core：依赖注入在应用装配处完成。</p>
+    </div>
+    <div class="mapping reveal">
+      <div class="map-row">
+        <div class="port">ChatRepository</div>
+        <div class="link">→</div>
+        <div class="impl">storage-local</div>
+      </div>
+      <div class="map-row">
+        <div class="port">AiGateway</div>
+        <div class="link">→</div>
+        <div class="impl">ai-http</div>
+      </div>
+      <div class="map-row">
+        <div class="port">FileStore</div>
+        <div class="link">→</div>
+        <div class="impl">file-browser</div>
+      </div>
+    </div>
+    <div class="map-desc reveal">
+      <div>localStorage 键值存储，<code>list / save</code>（按 id upsert）/ remove 契约实现。</div>
+      <div><code>/chat</code> 与 <code>/chat/stream</code>（SSE）双端点，流式解析 + 一次自动重试。</div>
+      <div>浏览器 File System Access API，目录句柄可持久化授权。</div>
+    </div>
+  </div>
+</section>
+<!-- ============ plugins ============ -->
+<section class="section" id="plugins">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Plugins</div>
+      <h2>三大能力插件，全部经扩展点挂载</h2>
+      <p>插件只依赖内核扩展点（slot / 事件），不依赖 UI 与彼此，可独立装卸。</p>
+    </div>
+    <div class="cards c3">
+      <div class="plugin reveal">
+        <div class="plugin-head">
+          <b>content-fetcher</b>
+          <span>数据采集层</span>
+        </div>
+        <div class="plugin-body">
+          <ul>
+            <li>fetcher.base.ts</li>
+            <li>fetcher.rss.ts</li>
+            <li>fetcher.web.ts</li>
+            <li>index.ts</li>
+          </ul>
+        </div>
+      </div>
+      <div class="plugin reveal">
+        <div class="plugin-head">
+          <b>content-pipeline</b>
+          <span>内容处理层</span>
+        </div>
+        <div class="plugin-body">
+          <ul>
+            <li>dedup.simhash.ts</li>
+            <li>dedup.semantic.ts</li>
+            <li>summarize.ts</li>
+            <li>pipeline.ts</li>
+          </ul>
+        </div>
+      </div>
+      <div class="plugin reveal">
+        <div class="plugin-head">
+          <b>geo-analyzer</b>
+          <span>GEO 分析层</span>
+        </div>
+        <div class="plugin-body">
+          <ul>
+            <li>keyword-extract.ts</li>
+            <li>competitor-scan.ts</li>
+            <li>brand-probe.ts</li>
+            <li>report.ts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="event-contract reveal">
+      <span>// 插件与内核只通过事件契约交互</span><br>
+      command:content:fetch → content:fetched → content:processed<br>
+      command:geo:run → geo:progress → geo:report:ready
+    </div>
+  </div>
+</section>
+<!-- ============ 依赖边界 ============ -->
+<section class="section alt" id="boundary">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Dependency Boundary</div>
+      <h2>依赖边界：单向分层，CI 强制</h2>
+      <p>依赖只允许从上向下；反向（core → adapters / ui → adapters）均为违规。</p>
+    </div>
+    <div class="dep-chain reveal">
+      <div class="chip">ui</div><span class="arrow">→</span>
+      <div class="chip">public-api</div><span class="arrow">→</span>
+      <div class="chip">core</div><span class="arrow">→</span>
+      <div class="chip blue">kernel</div>
+    </div>
+    <div class="cards c3">
+      <div class="card reveal">
+        <span class="num">01</span>
+        <h3>core 零外部依赖</h3>
+        <p>core 的 import 白名单只有标准库与公共类型，不依赖任何框架、UI 或适配器。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02</span>
+        <h3>反向依赖即构建失败</h3>
+        <p>dependency-cruiser 读取 <code>.dependency-cruiser.cjs</code> 规则集，任何越层 import 直接 fail。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03</span>
+        <h3>检查挂进 CI</h3>
+        <p><code>pnpm lint</code> 内嵌 dep-cruise，与 typecheck、test、build 一起在 GitHub Actions 执行。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ 事件流 ============ -->
+<section class="section" id="events">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Event Flow</div>
+      <h2>事件流：聊天主链路 + 内容插件链路</h2>
+      <p>所有跨层协作都通过事件契约完成，调用方与实现方彻底解耦。</p>
+    </div>
+    <h3 style="font-size:15px;color:var(--blue-3);margin:0 0 16px;font-weight:600;letter-spacing:.06em">聊天主链路</h3>
+    <div class="flow-wrap reveal" style="margin-bottom:42px">
+      <div class="flow">
+        <div class="node">UI 组件<small>视图层</small></div>
+        <div class="arrow"><i>提交</i>→</div>
+        <div class="node">send-message<small>用例层</small></div>
+        <div class="arrow"><i>调用</i>→</div>
+        <div class="node">AiGateway<small>端口</small></div>
+        <div class="arrow"><i>流式</i>→</div>
+        <div class="node active">/chat/stream<small>SSE 增量</small></div>
+        <div class="arrow"><i>落库</i>→</div>
+        <div class="node">ChatRepository<small>持久化</small></div>
+      </div>
+    </div>
+    <p class="reveal" style="color:var(--muted);font-size:14.5px;margin:-22px 0 46px;max-width:760px">
+      保存用户消息 → 调 AI → SSE 逐字回传（onDelta 实时渲染）→ 追加回复落库 → emit <code>message:updated</code> 更新视图。
+    </p>
+    <h3 style="font-size:15px;color:var(--blue-3);margin:0 0 16px;font-weight:600;letter-spacing:.06em">内容插件链路</h3>
+    <div class="flow-wrap reveal" style="margin-bottom:22px">
+      <div class="flow">
+        <div class="node">content-fetcher<small>采集</small></div>
+        <div class="arrow"><i>事件</i>→</div>
+        <div class="node">content-pipeline<small>过滤 · 去重 · 摘要 · 排序</small></div>
+        <div class="arrow"><i>处理</i>→</div>
+        <div class="node active">content:processed<small>结果事件</small></div>
+        <div class="arrow"><i>订阅</i>→</div>
+        <div class="node">UI 渲染<small>内容流视图</small></div>
+      </div>
+    </div>
+    <p class="reveal" style="color:var(--muted);font-size:14.5px;margin:0;max-width:760px">
+      <code>command:content:fetch</code> 触发采集 → <code>content:fetched</code> 驱动流水线 → <code>content:processed</code> 交付 UI。
+      GEO 同理：<code>command:geo:run</code> → <code>geo:report:ready</code>。
+    </p>
+  </div>
+</section>
+<!-- ============ 插件细节：采集 / 流水线 / GEO ============ -->
+<section class="section alt" id="pipeline">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Plugin Details</div>
+      <h2>插件内部：采集 · 流水线 · GEO 分析</h2>
+      <p>每个插件都是可独立替换的单元，步骤之间靠事件衔接。</p>
+    </div>
+    <!-- content-fetcher -->
+    <div class="card reveal" style="padding:32px;margin-bottom:20px">
+      <span class="num">content-fetcher</span>
+      <h3 style="font-size:20px;margin-bottom:18px">多源并发采集 + Playwright 兜底</h3>
+      <div class="cards c3" style="gap:22px">
+        <div>
+          <h4 style="font-size:14px;margin:0 0 12px;color:var(--blue-3)">RSS 内置信源（7 个）</h4>
+          <p style="font-size:13.5px;line-height:2.1;margin:0">
+            <span class="tag">hackernews</span><span class="tag">36kr</span><span class="tag">sspai</span>
+            <span class="tag">info_q_cn</span><span class="tag">github_trending</span>
+            <span class="tag">bbc_top</span><span class="tag">wallstreetcn</span>
+          </p>
+        </div>
+        <div>
+          <h4 style="font-size:14px;margin:0 0 12px;color:var(--blue-3)">WebFetcher 正文抓取</h4>
+          <p style="font-size:13.5px;margin:0;color:var(--muted)">
+            ① 前端 POST <code>{url}</code> → <code>/fetch/body</code><br>
+            ② Playwright headless 渲染，networkidle 后提取 article 正文<br>
+            ③ 返回 title/content → 标准化 ContentItem
+          </p>
+        </div>
+        <div>
+          <h4 style="font-size:14px;margin:0 0 12px;color:var(--blue-3)">健壮性设计</h4>
+          <p style="font-size:13.5px;margin:0;color:var(--muted)">
+            并发抓取使用 Promise.allSettled，单源失败不阻塞整体；结果按 publishedAt 倒序取 limit 条。
+            每 60 秒内核定时执行 healthCheck，状态经 <code>content.fetch:health</code> 事件上报 UI。
+          </p>
+        </div>
+      </div>
+      <p style="margin:20px 0 0;font-size:13px;color:var(--muted-2)">
+        Playwright 只在后端跑：前端不引入，避免 bundle 膨胀与反爬暴露。
+      </p>
+    </div>
+    <!-- content-pipeline -->
+    <div class="card reveal" style="padding:32px;margin-bottom:20px">
+      <span class="num">content-pipeline</span>
+      <h3 style="font-size:20px;margin-bottom:22px">四步流水线</h3>
+      <div class="flow-wrap" style="margin-bottom:24px">
+        <div class="flow">
+          <div class="node">filter<small>过滤</small></div>
+          <div class="arrow">→</div>
+          <div class="node">dedup<small>去重</small></div>
+          <div class="arrow">→</div>
+          <div class="node">summarize<small>摘要</small></div>
+          <div class="arrow">→</div>
+          <div class="node active">rank<small>排序</small></div>
+        </div>
+      </div>
+      <div class="cards c2" style="gap:20px">
+        <p style="font-size:13.5px;color:var(--muted);margin:0">
+          <b style="color:var(--text)">filter</b>：相关性判断，科技 / AI / 互联网 / 金融；不相关 importance 置 0 丢弃。<br>
+          <b style="color:var(--text)">dedup</b>：两级去重，SimHash 64 位指纹 + 汉明距离 ≤ 3 判重；语义向量 cosine &gt; 0.85（24 小时窗口放宽至 0.80）。<br>
+          <b style="color:var(--text)">summarize</b>：AI 生成中英摘要、3–5 标签、importance 0–100 评分与分类。<br>
+          <b style="color:var(--text)">rank</b>：按 importance + heat 排序，产出最终内容流。
+        </p>
+        <p style="font-size:13.5px;color:var(--muted);margin:0">
+          监听 <code>content:fetched</code> → pipeline.run（四步按序执行）→ 发出 <code>content:processed</code> 供 UI 渲染。<br><br>
+          语义向量与指纹持久化：PostgreSQL + pgvector，<code>content_items</code> 表带 <code>vector(384)</code> 列，
+          HNSW 索引加速相似检索。过滤 / 去重 / 摘要 / 排序全部可单独替换。
+        </p>
+      </div>
+    </div>
+    <!-- geo-analyzer -->
+    <div class="card reveal" style="padding:32px">
+      <span class="num">geo-analyzer</span>
+      <h3 style="font-size:20px;margin-bottom:22px">AI 搜索可见度分析流水线</h3>
+      <div class="flow-wrap" style="margin-bottom:26px">
+        <div class="flow">
+          <div class="node">提取关键词<small>品牌盲测 · 三意图覆盖</small></div>
+          <div class="arrow">→</div>
+          <div class="node">探测 AI 模型<small>关键词 × chat / reasoner</small></div>
+          <div class="arrow">→</div>
+          <div class="node active">生成报告<small>结构化输出</small></div>
+        </div>
+      </div>
+      <div class="cards c4" style="gap:18px">
+        <div class="card" style="padding:20px;background:rgba(59,130,246,.05)">
+          <span class="big-num">N%</span>
+          <p style="font-size:13px">品牌提及率 <code>mentionRate</code></p>
+        </div>
+        <div class="card" style="padding:20px;background:rgba(59,130,246,.05)">
+          <span class="big-num">N</span>
+          <p style="font-size:13px">平均提及位置（第几段）</p>
+        </div>
+        <div class="card" style="padding:20px;background:rgba(59,130,246,.05)">
+          <span class="big-num">4</span>
+          <p style="font-size:13px">情感维度 positive / neutral / negative</p>
+        </div>
+        <div class="card" style="padding:20px;background:rgba(59,130,246,.05)">
+          <span class="big-num">10</span>
+          <p style="font-size:13px">竞品排行 <code>topCompetitors</code></p>
+        </div>
+      </div>
+      <p style="margin:22px 0 0;font-size:13px;color:var(--muted-2)">
+        数字为指标口径示意（N 随品牌与关键词集变化）；<code>command:geo:run</code> → <code>geo:progress</code>（keywords / probing / report）→ <code>geo:report:ready</code>。
+      </p>
+    </div>
+  </div>
+</section>
+<!-- ============ 安全与部署 ============ -->
+<section class="section" id="security">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Security &amp; Deploy</div>
+      <h2>安全与部署：密钥收敛 + 双平台上线</h2>
+      <p>密钥泄漏面收敛到服务端；前端任何位置均不出现 Key，构建物可公开审计。</p>
+    </div>
+    <div class="cards c3">
+      <div class="card reveal">
+        <span class="num">01 · 密钥只在后端</span>
+        <h3>环境变量托管</h3>
+        <p><code>DEEPSEEK_API_KEY</code> 存于 Railway Variables 环境变量，仓库与代码零密钥。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02 · 前端零密钥</span>
+        <h3>构建产物可公开</h3>
+        <p><code>.env</code> 仅含 <code>VITE_API_BASE_URL</code>（后端公网地址），构建产物不含任何 Key。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03 · CORS 白名单</span>
+        <h3>来源严格限定</h3>
+        <p><code>ALLOWED_ORIGINS</code> 限定 <code>localhost:5173</code> 与 GitHub Pages 域名，其余来源拒绝。</p>
+      </div>
+    </div>
+    <div class="deploy reveal">
+      <div class="box">
+        <b>GitHub Pages</b>
+        <span>前端静态产物</span>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box blue">
+        <b>Railway 后端</b>
+        <span>FastAPI 代理</span>
+      </div>
+    </div>
+    <div class="cards c2 reveal" style="margin-top:20px">
+      <div class="card">
+        <span class="num">DEPLOY FLOW</span>
+        <h3>部署拓扑</h3>
+        <p>main push → GitHub Actions 构建 UI → Pages；Railway 自动部署 <code>server.py</code>，<code>/health</code> 探活。</p>
+      </div>
+      <div class="card">
+        <span class="num">REQUEST PATH</span>
+        <h3>请求路径</h3>
+        <p>浏览器 → <code>VITE_API_BASE_URL</code>（无密钥）→ <code>/chat</code> 后端 → 附 Authorization 调 DeepSeek → SSE 流回。</p>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ 测试与 CI ============ -->
+<section class="section alt" id="quality">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Testing &amp; CI</div>
+      <h2>三层测试 + 五步流水线</h2>
+      <p>任一环节失败即阻断合并与发布；部署密钥走 GitHub Secrets。</p>
+    </div>
+    <div class="cards c3" style="margin-bottom:52px">
+      <div class="card reveal">
+        <span class="num">01 · 单元测试</span>
+        <h3>Unit</h3>
+        <p>EventBus 通配订阅、handler 异常隔离；usecase 注入替身验证写、调 AI、存、发事件的完整顺序。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">02 · 契约测试</span>
+        <h3>Contract</h3>
+        <p>chat-repository contract 定义 <code>list / save</code>（按 id upsert）/ remove 行为，跨所有实现统一执行。</p>
+      </div>
+      <div class="card reveal">
+        <span class="num">03 · 集成校验</span>
+        <h3>Integration</h3>
+        <p>流式 AI 网关测试 SSE 增量解析、<code>[DONE]</code> 收尾与失败自动重试，覆盖异常路径。</p>
+      </div>
+    </div>
+    <div class="section-head reveal" style="margin-bottom:26px">
+      <h3 style="font-size:15px;color:var(--blue-3);margin:0 0 6px;font-weight:600;letter-spacing:.06em">CI 流水线（GitHub Actions）</h3>
+    </div>
+    <div class="ci-list reveal">
+      <div class="ci-step">lint（含 dependency-cruise）</div>
+      <div class="ci-arrow">↓</div>
+      <div class="ci-step">typecheck</div>
+      <div class="ci-arrow">↓</div>
+      <div class="ci-step">test（vitest）</div>
+      <div class="ci-arrow">↓</div>
+      <div class="ci-step highlight">build → deploy Pages</div>
+    </div>
+  </div>
+</section>
+<!-- ============ 现状 / 限制 / 下一步 ============ -->
+<section class="section" id="roadmap">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Status &amp; Roadmap</div>
+      <h2>现状、已知限制与下一步</h2>
+      <p>诚实地呈现当前能力边界，以及下一阶段的演进方向。</p>
+    </div>
+    <div class="cards c3">
+      <div class="road-col reveal">
+        <h4 class="green">当前状态</h4>
+        <div class="road-list">
+          <div class="road-item"><b>微内核架构落地</b>，版本 v1.2.2，本地与线上均可运行。</div>
+          <div class="road-item"><b>GEO 三插件开发完成</b>，经事件契约挂载，内核零改动。</div>
+          <div class="road-item"><b>双平台部署</b>：GitHub Pages 前端 + Railway 后端代理。</div>
+          <div class="road-item"><b>密钥仅在服务端</b>，前端产物可公开审计。</div>
+        </div>
+      </div>
+      <div class="road-col amber reveal">
+        <h4>已知限制</h4>
+        <div class="road-list">
+          <div class="road-item">聊天依赖有效 DeepSeek Key：欠费或空 Key 时 <code>/chat</code> 返回 402。</div>
+          <div class="road-item">语义去重依赖 PostgreSQL + pgvector，需要独立数据库实例。</div>
+          <div class="road-item">网页正文抓取依赖后端 Playwright 服务，离线时仅 RSS 可用。</div>
+          <div class="road-item">模型网关当前默认 DeepSeek，切换其他模型需更换适配器。</div>
+        </div>
+      </div>
+      <div class="road-col reveal">
+        <h4>下一步</h4>
+        <div class="road-list">
+          <div class="road-item"><b>多模型网关</b>：新增适配器切换不同模型供应商。</div>
+          <div class="road-item"><b>GEO 定时巡检</b>：定时任务驱动品牌可见度监控。</div>
+          <div class="road-item"><b>内容个性化排序</b>：按用户偏好重排内容流。</div>
+          <div class="road-item"><b>多模态输入</b>：语音 / 文件终端口扩展接入。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ Footer ============ -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo"><span class="mark"></span>AETHER</div>
+        <p>微内核 · 六边形端口 · 插件化扩展。内核只做生命周期、事件总线与注册表，业务能力全部由插件提供。</p>
+      </div>
+      <div class="footer-meta">
+        GitHub Pages 前端 + Railway 后端<br>
+        前端产物零密钥 · 可公开审计<br>
+        <code>v1.2.2</code>
+      </div>
+    </div>
+    <div class="copyright">© 2025 AETHER · 微内核架构文档站</div>
+  </div>
+</footer>
+<script>
+  /* ---------- 滚动进度条 ---------- */
+  const progress = document.getElementById('progress');
+  const nav = document.getElementById('nav');
+  function onScroll(){
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const p = h > 0 ? (window.scrollY / h) * 100 : 0;
+    progress.style.width = p + '%';
+    nav.classList.toggle('scrolled', window.scrollY > 12);
+    updateActive();
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  /* ---------- 入场动画 ---------- */
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -60px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  /* ---------- 导航高亮 ---------- */
+  const sections = [...document.querySelectorAll('section[id]')];
+  const links = [...document.querySelectorAll('.nav-links a')];
+  function updateActive(){
+    const pos = window.scrollY + 120;
+    let current = '';
+    sections.forEach(sec=>{
+      if(sec.offsetTop <= pos) current = sec.id;
+    });
+    links.forEach(a=>{
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+  onScroll();
+</script>
+</body>
+</html>
