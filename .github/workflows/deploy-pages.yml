@@ -32,10 +32,13 @@ jobs:
         working-directory: chat-app
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BASE_PATH: /${{ github.event.repository.name }}/chat/
+      - run: |
+          mkdir -p site/chat
+          cp -r chat-app/packages/ui/dist/. site/chat/
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: chat-app/packages/ui/dist
+          path: site
 
   deploy:
     needs: build
