@@ -7,23 +7,24 @@
 <meta name="description" content="AETHER 是一个自主智能体内核——感知、规划、执行、反思，以好奇心为引擎，以安全策略为边界。">
 <style>
   :root{
-    --bg:#070b16;
-    --bg-2:#0b1120;
-    --surface:rgba(255,255,255,.04);
-    --surface-2:rgba(255,255,255,.07);
-    --border:rgba(255,255,255,.1);
-    --border-strong:rgba(255,255,255,.18);
-    --text:#e6ecf7;
-    --muted:#8b9ab3;
-    --muted-2:#64748b;
+    --bg:#f6f9ff;
+    --bg-2:#eef3fe;
+    --surface:#ffffff;
+    --border:#e2e8f0;
+    --border-strong:#cbd5e1;
+    --text:#0f172a;
+    --muted:#475569;
+    --muted-2:#94a3b8;
     --blue:#2563eb;
     --blue-2:#3b82f6;
-    --blue-3:#93c5fd;
-    --cyan:#60a5fa;
+    --blue-3:#1d4ed8;
     --green:#22c55e;
     --max:1140px;
     --radius:14px;
     --font-mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --shadow-sm:0 1px 3px rgba(15,23,42,.05);
+    --shadow-md:0 8px 24px rgba(15,23,42,.08);
+    --shadow-blue:0 8px 22px rgba(37,99,235,.28);
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -41,54 +42,39 @@
   code{
     font-family:var(--font-mono);
     font-size:.88em;
-    background:rgba(59,130,246,.14);
+    background:rgba(37,99,235,.08);
     color:var(--blue-3);
     padding:2px 7px;
     border-radius:6px;
   }
-  .stars{
+  /* ---------- 科技浅色背景：网格 + 蓝色光晕 ---------- */
+  .bg-tech{
     position:fixed;inset:0;z-index:0;pointer-events:none;
     background:
-      radial-gradient(1px 1px at 12% 22%, rgba(255,255,255,.5), transparent 60%),
-      radial-gradient(1px 1px at 28% 8%, rgba(255,255,255,.42), transparent 60%),
-      radial-gradient(1.5px 1.5px at 41% 30%, rgba(147,197,253,.55), transparent 60%),
-      radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,.38), transparent 60%),
-      radial-gradient(1px 1px at 63% 38%, rgba(255,255,255,.45), transparent 60%),
-      radial-gradient(1.5px 1.5px at 74% 12%, rgba(147,197,253,.5), transparent 60%),
-      radial-gradient(1px 1px at 86% 26%, rgba(255,255,255,.4), transparent 60%),
-      radial-gradient(1px 1px at 92% 8%, rgba(255,255,255,.35), transparent 60%),
-      radial-gradient(1px 1px at 18% 68%, rgba(255,255,255,.3), transparent 60%),
-      radial-gradient(1.5px 1.5px at 33% 82%, rgba(147,197,253,.4), transparent 60%),
-      radial-gradient(1px 1px at 47% 58%, rgba(255,255,255,.35), transparent 60%),
-      radial-gradient(1px 1px at 58% 74%, rgba(255,255,255,.28), transparent 60%),
-      radial-gradient(1px 1px at 70% 62%, rgba(255,255,255,.32), transparent 60%),
-      radial-gradient(1.5px 1.5px at 81% 84%, rgba(147,197,253,.38), transparent 60%),
-      radial-gradient(1px 1px at 94% 56%, rgba(255,255,255,.3), transparent 60%),
-      radial-gradient(1px 1px at 8% 48%, rgba(255,255,255,.32), transparent 60%),
-      radial-gradient(1px 1px at 88% 40%, rgba(255,255,255,.28), transparent 60%),
-      radial-gradient(1200px 720px at 50% -18%, rgba(59,130,246,.24), transparent 70%),
-      radial-gradient(900px 560px at 84% 10%, rgba(59,130,246,.10), transparent 72%),
-      linear-gradient(180deg,#070b16 0%,#0b1222 62%,#070b16 100%);
+      radial-gradient(1200px 720px at 50% -18%, rgba(37,99,235,.10), transparent 70%),
+      radial-gradient(900px 560px at 84% 10%, rgba(59,130,246,.06), transparent 72%),
+      linear-gradient(180deg,#f8fbff 0%,#f6f9ff 62%,#f3f7ff 100%);
   }
-  .stars::after{
+  .bg-tech::after{
     content:"";position:absolute;inset:0;
     background-image:
-      linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);
+      linear-gradient(rgba(37,99,235,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(37,99,235,.05) 1px,transparent 1px);
     background-size:64px 64px;
     -webkit-mask-image:radial-gradient(900px 620px at 50% 20%,#000 0%,transparent 78%);
     mask-image:radial-gradient(900px 620px at 50% 20%,#000 0%,transparent 78%);
   }
   .container{max-width:var(--max);margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  /* ---------- 导航 ---------- */
   .nav{
     position:fixed;top:0;left:0;right:0;z-index:90;
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    background:rgba(7,10,18,.72);
+    backdrop-filter:blur(16px) saturate(180%);
+    -webkit-backdrop-filter:blur(16px) saturate(180%);
+    background:rgba(255,255,255,.78);
     border-bottom:1px solid transparent;
-    transition:border-color .3s,background .3s;
+    transition:border-color .3s,background .3s,box-shadow .3s;
   }
-  .nav.scrolled{border-bottom-color:var(--border);background:rgba(7,10,18,.9)}
+  .nav.scrolled{border-bottom-color:var(--border);background:rgba(255,255,255,.92);box-shadow:0 1px 12px rgba(15,23,42,.05)}
   .nav-inner{
     max-width:var(--max);margin:0 auto;padding:15px 24px;
     display:flex;align-items:center;justify-content:space-between;gap:20px;
@@ -100,7 +86,7 @@
   .logo .mark{
     width:22px;height:22px;border-radius:7px;
     background:linear-gradient(135deg,#3b82f6,#1d4ed8);
-    box-shadow:0 0 18px rgba(59,130,246,.55);
+    box-shadow:0 3px 10px rgba(37,99,235,.35);
     display:inline-block;position:relative;
   }
   .logo .mark::after{
@@ -112,14 +98,16 @@
     font-size:13.5px;font-weight:600;color:var(--muted);
     padding:8px 16px;border-radius:99px;
     border:1px solid var(--border);
+    background:#fff;
     transition:.25s;white-space:nowrap;
   }
-  .nav-link:hover{color:var(--text);border-color:var(--border-strong)}
+  .nav-link:hover{color:var(--blue-3);border-color:rgba(37,99,235,.4)}
   .nav-link.primary{
     background:var(--blue);color:#fff;border-color:var(--blue);
-    box-shadow:0 4px 16px rgba(59,130,246,.35);
+    box-shadow:0 4px 14px rgba(37,99,235,.3);
   }
   .nav-link.primary:hover{background:var(--blue-2);border-color:var(--blue-2)}
+  /* ---------- Hero ---------- */
   .hero{
     position:relative;
     min-height:100vh;
@@ -133,8 +121,9 @@
     font-family:var(--font-mono);font-size:12.5px;font-weight:600;
     letter-spacing:.04em;color:var(--blue-3);
     padding:8px 18px;border-radius:99px;
-    background:rgba(59,130,246,.1);
-    border:1px solid rgba(59,130,246,.32);
+    background:#fff;
+    border:1px solid rgba(37,99,235,.25);
+    box-shadow:0 2px 10px rgba(37,99,235,.08);
     margin-bottom:34px;
   }
   .pill .dot{
@@ -149,10 +138,10 @@
   .hero h1{
     font-size:clamp(40px,7vw,72px);
     line-height:1.12;letter-spacing:-.035em;
-    font-weight:800;margin:0 0 30px;
+    font-weight:800;margin:0 0 30px;color:var(--text);
   }
   .hero h1 .grad{
-    background:linear-gradient(110deg,#bfdbfe 0%,#3b82f6 42%,#60a5fa 100%);
+    background:linear-gradient(110deg,#60a5fa 0%,#2563eb 45%,#1d4ed8 100%);
     -webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;
   }
@@ -160,17 +149,18 @@
     color:var(--muted);font-size:17px;line-height:1.9;
     margin:0 0 52px;
   }
+  /* ---------- 输入区 ---------- */
   .ask-box{
     display:flex;align-items:center;gap:10px;
     max-width:640px;margin:0 auto;
     padding:8px 10px 8px 22px;
     border-radius:18px;
-    background:rgba(255,255,255,.05);
+    background:#fff;
     border:1px solid var(--border-strong);
-    backdrop-filter:blur(8px);
-    -webkit-backdrop-filter:blur(8px);
-    box-shadow:0 18px 48px -20px rgba(0,0,0,.8);
+    box-shadow:0 18px 48px -22px rgba(37,99,235,.22);
+    transition:border-color .25s,box-shadow .25s;
   }
+  .ask-box:focus-within{border-color:rgba(37,99,235,.55);box-shadow:0 18px 48px -18px rgba(37,99,235,.3)}
   .ask-box input{
     flex:1;min-width:0;
     background:transparent;border:none;outline:none;
@@ -183,20 +173,21 @@
     background:var(--blue);color:#fff;
     font-size:14.5px;font-weight:650;border:none;cursor:pointer;
     transition:.25s;white-space:nowrap;
-    box-shadow:0 6px 20px rgba(59,130,246,.4);
+    box-shadow:0 6px 18px rgba(37,99,235,.35);
   }
   .ask-box .btn-go:hover{background:var(--blue-2);transform:translateY(-1px)}
   .ask-box .arrow{
     width:34px;height:34px;border-radius:10px;flex:0 0 auto;
-    background:rgba(59,130,246,.16);
-    border:1px solid rgba(59,130,246,.35);
+    background:rgba(37,99,235,.1);
+    border:1px solid rgba(37,99,235,.3);
     color:var(--blue-3);font-style:normal;font-weight:700;font-size:16px;
     display:inline-flex;align-items:center;justify-content:center;
   }
+  /* ---------- Footer ---------- */
   footer{
     position:relative;z-index:1;
     border-top:1px solid var(--border);
-    background:linear-gradient(180deg,transparent,rgba(11,17,32,.8));
+    background:linear-gradient(180deg,transparent,rgba(238,243,254,.85));
     padding:70px 0 34px;
   }
   .footer-grid{
@@ -209,7 +200,7 @@
   .footer-col .f-brand .mark{
     width:18px;height:18px;border-radius:6px;
     background:linear-gradient(135deg,#3b82f6,#1d4ed8);
-    box-shadow:0 0 12px rgba(59,130,246,.5);
+    box-shadow:0 2px 8px rgba(37,99,235,.35);
     display:inline-block;position:relative;
   }
   .footer-col .f-brand .mark::after{
@@ -234,10 +225,11 @@
     color:var(--muted-2);font-size:12.5px;
   }
   .footer-bottom code{
-    background:rgba(255,255,255,.05);border:1px solid var(--border);
-    color:var(--muted);font-size:11.5px;
+    background:#fff;border:1px solid var(--border);
+    color:var(--blue-3);font-size:11.5px;
   }
   .footer-bottom .slogan{color:var(--muted);letter-spacing:.03em}
+  /* ---------- 响应式 ---------- */
   @media (max-width:900px){
     .footer-grid{grid-template-columns:1fr 1fr;gap:32px}
     .hero{padding:130px 0 70px}
@@ -251,7 +243,7 @@
 </style>
 </head>
 <body>
-<div class="stars"></div>
+<div class="bg-tech"></div>
 <nav class="nav" id="nav">
   <div class="nav-inner">
     <a class="logo" href="#top"><span class="mark"></span>AETHER</a>
